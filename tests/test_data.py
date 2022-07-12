@@ -16,6 +16,7 @@ class TestAtomicData:
                 [0.0, 1.0, 0.0],
             ]
         ),
+        cell=np.array([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]]),
         forces=np.array(
             [
                 [0.0, -1.3, 0.0],
@@ -108,6 +109,7 @@ def test_periodic_edge():
 
 def test_half_periodic():
     atoms = ase.build.fcc111("Al", size=(3, 3, 1), vacuum=0.0)
+    print(atoms.cell)
     assert all(atoms.pbc == (True, True, False))
     config = config_from_atoms(atoms)  # first shell dist is 2.864A
     edge_index, shifts = get_neighborhood(

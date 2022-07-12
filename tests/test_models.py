@@ -17,6 +17,7 @@ config = data.Configuration(
             [0.0, 1.0, 0.0],
         ]
     ),
+    cell=np.array([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]]),
     forces=np.array(
         [
             [0.0, -1.3, 0.0],
@@ -61,6 +62,7 @@ def test_mace():
     config_rotated = data.Configuration(
         atomic_numbers=np.array([8, 1, 1]),
         positions=positions_rotated,
+        cell=np.array([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [0.0, 0.0, 10.0]]),
         forces=np.array(
             [
                 [0.0, -1.3, 0.0],
