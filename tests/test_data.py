@@ -41,10 +41,7 @@ class TestAtomicData:
         data2 = AtomicData.from_config(self.config, z_table=self.table, cutoff=3.0)
 
         data_loader = torch_geometric.dataloader.DataLoader(
-            dataset=[data1, data2],
-            batch_size=2,
-            shuffle=True,
-            drop_last=False,
+            dataset=[data1, data2], batch_size=2, shuffle=True, drop_last=False,
         )
 
         for batch in data_loader:
@@ -59,25 +56,14 @@ class TestAtomicData:
 
 class TestNeighborhood:
     def test_basic(self):
-        positions = np.array(
-            [
-                [-1.0, 0.0, 0.0],
-                [+0.0, 0.0, 0.0],
-                [+1.0, 0.0, 0.0],
-            ]
-        )
+        positions = np.array([[-1.0, 0.0, 0.0], [+0.0, 0.0, 0.0], [+1.0, 0.0, 0.0],])
 
         indices, shifts = get_neighborhood(positions, cutoff=1.5)
         assert indices.shape == (2, 4)
         assert shifts.shape == (4, 3)
 
     def test_signs(self):
-        positions = np.array(
-            [
-                [+0.5, 0.5, 0.0],
-                [+1.0, 1.0, 0.0],
-            ]
-        )
+        positions = np.array([[+0.5, 0.5, 0.0], [+1.0, 1.0, 0.0],])
 
         cell = np.array([[2.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
         edge_index, shifts = get_neighborhood(
@@ -101,10 +87,7 @@ def test_periodic_edge():
         config.positions[receiver] - config.positions[sender] + shifts
     )  # [n_edges, 3]
     assert vectors.shape == (12, 3)  # 12 neighbors in close-packed bulk
-    assert np.allclose(
-        np.linalg.norm(vectors, axis=-1),
-        dist,
-    )
+    assert np.allclose(np.linalg.norm(vectors, axis=-1), dist,)
 
 
 def test_half_periodic():
@@ -123,7 +106,4 @@ def test_half_periodic():
     _, neighbor_count = np.unique(edge_index[0], return_counts=True)
     assert (neighbor_count == 6).all()  # 6 neighbors
     # Check not periodic in z
-    assert np.allclose(
-        vectors[:, 2],
-        np.zeros(vectors.shape[0]),
-    )
+    assert np.allclose(vectors[:, 2], np.zeros(vectors.shape[0]),)

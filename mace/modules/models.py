@@ -1,3 +1,9 @@
+###########################################################################################
+# Implementation of MACE models and other models based E(3)-Equivariant MPNNs
+# Authors: Ilyes Batatia, Gregor Simm
+# This program is distributed under the ASL License (see ASL.md)
+###########################################################################################
+
 from typing import Any, Callable, Dict, List, Optional, Type
 
 import numpy as np
@@ -38,10 +44,8 @@ class MACE(torch.nn.Module):
         atomic_numbers: List[int],
         correlation: int,
         gate: Optional[Callable],
-        device: str = "cpu",
     ):
         super().__init__()
-        self.dtype = torch.get_default_dtype()
         self.r_max = r_max
         self.atomic_numbers = atomic_numbers
         # Embedding
@@ -91,7 +95,6 @@ class MACE(torch.nn.Module):
             element_dependent=True,
             num_elements=num_elements,
             use_sc=use_sc_first,
-            device=device,
         )
         self.products = torch.nn.ModuleList([prod])
 
@@ -122,7 +125,6 @@ class MACE(torch.nn.Module):
                 element_dependent=True,
                 num_elements=num_elements,
                 use_sc=True,
-                device=device,
             )
             self.products.append(prod)
             if i == num_interactions - 2:
@@ -186,10 +188,7 @@ class MACE(torch.nn.Module):
 
 class ScaleShiftMACE(MACE):
     def __init__(
-        self,
-        atomic_inter_scale: float,
-        atomic_inter_shift: float,
-        **kwargs,
+        self, atomic_inter_scale: float, atomic_inter_shift: float, **kwargs,
     ):
         super().__init__(**kwargs)
         self.scale_shift = ScaleShiftBlock(
@@ -379,10 +378,7 @@ class BOTNet(torch.nn.Module):
 
 class ScaleShiftBOTNet(BOTNet):
     def __init__(
-        self,
-        atomic_inter_scale: float,
-        atomic_inter_shift: float,
-        **kwargs,
+        self, atomic_inter_scale: float, atomic_inter_shift: float, **kwargs,
     ):
         super().__init__(**kwargs)
         self.scale_shift = ScaleShiftBlock(
