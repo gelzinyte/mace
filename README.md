@@ -14,7 +14,7 @@ Requirements:
 If you do not have CUDA pre-installed, it is **recommended** to follow the conda installation process:
 ```sh
 # Create a virtual environment and activate it
-conda create mace_env
+conda create --name mace_env
 conda activate mace_env
 
 # Install PyTorch
@@ -145,4 +145,4 @@ For bugs or feature requests, please use [GitHub Issues](https://github.com/ACEs
 
 ## License
 
-MACE is published and distributed under the [Academic Software License v1.0 ](ASL.md).
+MACE is published and distributed under the [MIT license](MIT.md).
