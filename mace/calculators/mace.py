@@ -25,7 +25,6 @@ class MACECalculator(Calculator):
         energy_units_to_eV: float = 1.0,
         length_units_to_A: float = 1.0,
         default_dtype="float64",
-        calc_descriptor = False,
         **kwargs
     ):
         Calculator.__init__(self, **kwargs)
@@ -42,7 +41,6 @@ class MACECalculator(Calculator):
 
         torch_tools.set_default_dtype(default_dtype)
 
-        self.calc_descriptor = calc_descriptor
         self.extra_results = {}
 
     # pylint: disable=dangerous-default-value
@@ -75,6 +73,7 @@ class MACECalculator(Calculator):
         out = self.model(batch, compute_stress=True)
         energy = out["energy"].detach().cpu().item()
         forces = out["forces"].detach().cpu().numpy()
+        descriptor = out["first_layer_node_feats"].detach().cpu().numpy()
 
         # store results
         E = energy * self.energy_units_to_eV
@@ -85,10 +84,8 @@ class MACECalculator(Calculator):
             "forces": forces * (self.energy_units_to_eV / self.length_units_to_A),
         }
 
-        # calculate descriptor as output from the first layer
-        if self.calc_descriptor:
-            descriptor = out["first_layer_node_feats"].detach().cpu().numpy()
-            self.extra_results["descriptor"] = descriptor
+        # save non-ASE-standard descriptor to extra_results dictionary
+        self.extra_results["descriptor"] = descriptor
 
         # even though compute_stress is True, stress can be none if pbc is False
         # not sure if correct ASE thing is to have no dict key, or dict key with value None
