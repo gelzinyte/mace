@@ -268,9 +268,9 @@ class ScaleShiftMACE(MACE):
 
         # Interactions
         node_es_list = []
-        for interaction, product, readout in zip(
+        for interaction_idx, (interaction, product, readout) in enumerate(zip(
             self.interactions, self.products, self.readouts
-        ):
+        )):
             node_feats, sc = interaction(
                 node_attrs=data.node_attrs,
                 node_feats=node_feats,
@@ -281,6 +281,10 @@ class ScaleShiftMACE(MACE):
             node_feats = product(
                 node_feats=node_feats, sc=sc, node_attrs=data.node_attrs
             )
+
+            if interaction_idx == 0:
+                first_layer_node_feats = node_feats
+
             node_es_list.append(readout(node_feats).squeeze(-1))  # {[n_nodes, ], }
 
         # Sum over interactions
@@ -313,6 +317,7 @@ class ScaleShiftMACE(MACE):
             "forces": forces,
             "virials": virials,
             "stress": stress,
+            "first_layer_node_feats": first_layer_node_feats,
         }
 
         return output
