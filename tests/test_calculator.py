@@ -125,3 +125,11 @@ def test_calculator_stress(fitting_configs, trained_model):
     grads = gradient_test(at_wrapped)
 
     assert np.allclose(grads[0], grads[1])
+
+
+
+def test_calculator_descriptor(fitting_configs, trained_model):
+    at = fitting_configs[2].copy()
+
+    trained_model.calculate(atoms=at)
+    assert trained_model.extra_results["descriptor"].shape == (3, 256)
