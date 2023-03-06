@@ -1,26 +1,63 @@
-# MACE
+<span style="font-size:larger;">MACE</span>
+========
+[![GitHub release](https://img.shields.io/github/release/ACEsuit/mace.svg)](https://GitHub.com/ACEsuit/mace/releases/)
+[![Paper](https://img.shields.io/badge/Paper-NeurIPs2022-blue)](https://openreview.net/forum?id=YPpSngE-ZU)
+[![License](https://img.shields.io/badge/License-MIT%202.0-blue.svg)](https://opensource.org/licenses/mit)
+[![GitHub issues](https://img.shields.io/github/issues/ACEsuit/mace.svg)](https://GitHub.com/ACEsuit/mace/issues/)
+[![Documentation Status](https://readthedocs.org/projects/mace/badge/)](https://mace-docs.readthedocs.io/en/latest/)
+
+# Table of contents
+- [About MACE](#about-mace)
+- [Documentation](#documentation)
+- [Installation](#installation)
+- [Usage](#usage)
+    - [Training](#training)
+    - [Evaluation](#evaluation)
+- [Tutorial](#tutorial)
+- [Weights and Biases](#weights-and-biases-for-experiment-tracking)
+- [Development](#development)
+- [References](#references)
+- [Contact](#contact)
+- [License](#license)
+
+
+##  About MACE
+MACE provides fast and accurate machine learning interatomic potentials with higher order equivariant message passing.
 
 This repository contains the MACE reference implementation developed by
 Ilyes Batatia, Gregor Simm, and David Kovacs.
+
+Also available: 
+* [MACE in JAX](https://github.com/ACEsuit/mace-jax), currently about 2x times faster at evaluation, but training is recommended in Pytorch for optimal performances.
+* [MACE layers](https://github.com/ACEsuit/mace-layer) for constructing higher order equivariant graph neural networks for arbitrary 3D point clouds.
+
+## Documentation
+
+A partial documentation is available at: https://mace-docs.readthedocs.io/en/latest/
 
 ## Installation
 
 Requirements:
 * Python >= 3.7
-* [PyTorch](https://pytorch.org/) >= 1.8
+* [PyTorch](https://pytorch.org/) >= 1.12
+
+(for openMM, use Python = 3.9)
 
 ### conda installation
 
 If you do not have CUDA pre-installed, it is **recommended** to follow the conda installation process:
 ```sh
 # Create a virtual environment and activate it
-conda create mace_env
+conda create --name mace_env
 conda activate mace_env
 
 # Install PyTorch
-conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch-lts -c conda-forge
+conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia
 
-# Clone and install MACE (and all required packages), use token if still private repo
+# (optional) Install MACE's dependencies from Conda as well
+conda install numpy scipy matplotlib ase opt_einsum prettytable pandas e3nn
+
+# Clone and install MACE (and all required packages)
 git clone git@github.com:ACEsuit/mace.git 
 pip install ./mace
 ```
@@ -33,8 +70,8 @@ To install via `pip`, follow the steps below:
 python -m venv mace-venv
 source mace-venv/bin/activate
 
-# Install PyTorch (for example, for CUDA 10.2 [cu102])
-pip install torch==1.8.2 --extra-index-url "https://download.pytorch.org/whl/lts/1.8/cu102"
+# Install PyTorch (for example, for CUDA 11.6 [cu116])
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
 # Clone and install MACE (and all required packages)
 git clone git@github.com:ACEsuit/mace.git
@@ -102,6 +139,16 @@ python3 ./mace/scripts/eval_configs.py \
 
 You can run our [Colab tutorial](https://colab.research.google.com/drive/1D6EtMUjQPey_GkuxUAbPgld6_9ibIa-V?authuser=1#scrollTo=Z10787RE1N8T) to quickly get started with MACE.
 
+## Weights and Biases for experiment tracking
+
+If you would like to use MACE with Weights and Biases to log your experiments simply install with 
+
+```sh
+pip install ./mace[wandb]
+```
+
+And specify the necessary keyword arguments (`--wandb`, `--wandb_project`, `--wandb_entity`, `--wandb_name`, `--wandb_log_hypers`)
+
 ## Development
 
 We use `black`, `isort`, `pylint`, and `mypy`.
@@ -119,16 +166,16 @@ We are happy to accept pull requests under an [MIT license](https://choosealicen
 
 If you use this code, please cite our papers:
 ```text
-@misc{Batatia2022MACE,
-  title = {MACE: Higher Order Equivariant Message Passing Neural Networks for Fast and Accurate Force Fields},
-  author = {Batatia, Ilyes and Kov{\'a}cs, D{\'a}vid P{\'e}ter and Simm, Gregor N. C. and Ortner, Christoph and Cs{\'a}nyi, G{\'a}bor},
-  year = {2022},
-  number = {arXiv:2206.07697},
-  eprint = {2206.07697},
-  eprinttype = {arxiv},
-  doi = {10.48550/ARXIV.2206.07697},
-  archiveprefix = {arXiv}
+@inproceedings{
+Batatia2022mace,
+title={{MACE}: Higher Order Equivariant Message Passing Neural Networks for Fast and Accurate Force Fields},
+author={Ilyes Batatia and David Peter Kovacs and Gregor N. C. Simm and Christoph Ortner and Gabor Csanyi},
+booktitle={Advances in Neural Information Processing Systems},
+editor={Alice H. Oh and Alekh Agarwal and Danielle Belgrave and Kyunghyun Cho},
+year={2022},
+url={https://openreview.net/forum?id=YPpSngE-ZU}
 }
+
 @misc{Batatia2022Design,
   title = {The Design Space of E(3)-Equivariant Atom-Centered Interatomic Potentials},
   author = {Batatia, Ilyes and Batzner, Simon and Kov{\'a}cs, D{\'a}vid P{\'e}ter and Musaelian, Albert and Simm, Gregor N. C. and Drautz, Ralf and Ortner, Christoph and Kozinsky, Boris and Cs{\'a}nyi, G{\'a}bor},
@@ -149,4 +196,4 @@ For bugs or feature requests, please use [GitHub Issues](https://github.com/ACEs
 
 ## License
 
-MACE is published and distributed under the [MIT](MIT.md).
+MACE is published and distributed under the [MIT License](MIT.md).
