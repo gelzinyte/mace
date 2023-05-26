@@ -76,6 +76,7 @@ def test_mace():
     model = modules.MACE(**model_config)
     model_compiled = jit.compile(model)
 
+
     atomic_data = data.AtomicData.from_config(config, z_table=table, cutoff=3.0)
     atomic_data2 = data.AtomicData.from_config(
         config_rotated, z_table=table, cutoff=3.0
