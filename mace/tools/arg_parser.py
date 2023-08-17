@@ -87,6 +87,13 @@ def build_default_arg_parser() -> argparse.ArgumentParser:
         "--r_max", help="distance cutoff (in Ang)", type=float, default=5.0
     )
     parser.add_argument(
+        "--radial_type",
+        help="type of radial basis functions",
+        type=str,
+        default="bessel",
+        choices=["bessel", "gaussian"],
+    )
+    parser.add_argument(
         "--num_radial_basis",
         help="number of radial basis functions",
         type=int,
@@ -105,6 +112,7 @@ def build_default_arg_parser() -> argparse.ArgumentParser:
         default="RealAgnosticResidualInteractionBlock",
         choices=[
             "RealAgnosticResidualInteractionBlock",
+            "RealAgnosticAttResidualInteractionBlock",
             "RealAgnosticInteractionBlock",
         ],
     )
@@ -143,7 +151,7 @@ def build_default_arg_parser() -> argparse.ArgumentParser:
         "--hidden_irreps",
         help="irreps for hidden node states",
         type=str,
-        default="32x0e",
+        default="128x0e + 128x1o",
     )
     # add option to specify irreps by channel number and max L
     parser.add_argument(
