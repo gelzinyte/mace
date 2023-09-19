@@ -21,8 +21,6 @@ def get_neighborhood(
     assert all(i == False for i in pbc) or all(i == True for i in pbc)  # matscipy nly works with fully periodic or fully non-periodic for now. 
     assert cell.shape == (3, 3)
 
-<<<<<<< HEAD
-=======
     pbc_x = pbc[0]
     pbc_y = pbc[1]
     pbc_z = pbc[2]
@@ -37,7 +35,6 @@ def get_neighborhood(
     if not pbc_z:
         cell[:, 2] = max_positions * 5 * cutoff * identity[:, 2]
 
->>>>>>> develop
     sender, receiver, unit_shifts = neighbour_list(
         quantities="ijS",
         pbc=pbc,
