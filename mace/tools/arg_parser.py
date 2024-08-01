@@ -366,6 +366,12 @@ def build_default_arg_parser() -> argparse.ArgumentParser:
         type=str,
         default="charges",
     )
+    parser.add_argument(
+        "--efgs_key",
+        help="Key of electric field gradient tensors in training xyz",
+        type=str,
+        default="efgs",
+    )
 
     # Loss and optimization
     parser.add_argument(
@@ -433,6 +439,12 @@ def build_default_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=1.0,
         dest="swa_dipole_weight",
+    )
+    parser.add_argument(
+        "--efgs_weight",
+        help="weight of efgs loss",
+        type=float,
+        default=1.0,
     )
     parser.add_argument(
         "--config_type_weights",
