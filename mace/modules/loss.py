@@ -146,6 +146,20 @@ def conditional_huber_forces(
 
     return torch.mean(se)
 
+def mean_squared_error_efgs(
+    ref: Batch,
+    pred: TensorDict
+) -> torch.Tensor:
+    # efgs: [n_graphs, num_atoms, 3, 3] EG?
+    
+    num_atoms = 
+    # EG might need to sort out the shapes 
+    # EG need to add config weights? 
+    return torch.mean(
+            torch.square(
+                (ref["efgs"].view(-1, num_atoms, 3, 3) - pred["efgs"])
+            )
+    )
 
 class WeightedEnergyForcesLoss(torch.nn.Module):
     def __init__(self, energy_weight=1.0, forces_weight=1.0) -> None:
@@ -357,7 +371,7 @@ class WeightedEnergyForcesDipoleLoss(torch.nn.Module):
         return (
             self.energy_weight * weighted_mean_squared_error_energy(ref, pred)
             + self.forces_weight * mean_squared_error_forces(ref, pred)
-            + self.dipole_weight * weighted_mean_squared_error_dipole(ref, pred) * 100
+            + self.dipole_weight * weighted_mean_squared_error_dipole(ref, pred) * 100 # EG: times 100???
         )
 
     def __repr__(self):
@@ -365,3 +379,20 @@ class WeightedEnergyForcesDipoleLoss(torch.nn.Module):
             f"{self.__class__.__name__}(energy_weight={self.energy_weight:.3f}, "
             f"forces_weight={self.forces_weight:.3f}, dipole_weight={self.dipole_weight:.3f})"
         )
+
+
+class WeightedEFGSLoss(torch.nn.Module):
+    def __init__(self, efgs_weight=1.0) -> None:
+        super().__init__()
+        self.register_buffer(
+            "efgs_weight",
+            torch.tensor(efgs_weight, dtype=torch.get_default_dtype()),
+        )
+
+        def forward(self, ref: Batch, pred: TensorDict) -> torch.Tensor:
+            return(
+                self.efgs_weight * mean_squared_error_efgs(ref, pred)
+            )
+
+
+

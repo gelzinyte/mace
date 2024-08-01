@@ -86,6 +86,23 @@ class LinearDipoleReadoutBlock(torch.nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # [n_nodes, irreps]  # [..., ]
         return self.linear(x)  # [n_nodes, 1]
 
+#EG is this needed?
+@compile_mode("script")
+class LinearEFGReadoutBlock(torch.nn.Module):
+    def __init__(
+        self, 
+        irreps_in: o3.Irreps,
+    ):
+        super().__init__()
+
+        # in mu_alpha dipole_only only has "1x1o" - should I only have 1x2e?
+        #self.irreps_out = o3.Irreps("1x0e + 1x1o + 1x2e")
+        self.irreps_out = o3.Irreps("1x2e")
+        self.linear = o3.Linear(irreps_in=irreps_in, irreps_out=self.irreps_out)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor: # [n_nodes, irreps] ???
+        return self.linear(x)
+            
 
 @compile_mode("script")
 class NonLinearDipoleReadoutBlock(torch.nn.Module):
