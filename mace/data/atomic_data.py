@@ -56,12 +56,14 @@ class AtomicData(torch_geometric.data.Data):
         forces_weight: Optional[torch.Tensor],  # [,]
         stress_weight: Optional[torch.Tensor],  # [,]
         virials_weight: Optional[torch.Tensor],  # [,]
+        efgs_weight: Optional[torch.Tensor], # [,]
         forces: Optional[torch.Tensor],  # [n_nodes, 3]
         energy: Optional[torch.Tensor],  # [, ]
         stress: Optional[torch.Tensor],  # [1,3,3]
         virials: Optional[torch.Tensor],  # [1,3,3]
         dipole: Optional[torch.Tensor],  # [, 3]
         charges: Optional[torch.Tensor],  # [n_nodes, ]
+        efgs: Optional[torch.Tensor], #[n_nodes, 3, 3]
     ):
         # Check shapes
         num_nodes = node_attrs.shape[0]
@@ -82,6 +84,7 @@ class AtomicData(torch_geometric.data.Data):
         assert stress is None or stress.shape == (1, 3, 3)
         assert virials is None or virials.shape == (1, 3, 3)
         assert dipole is None or dipole.shape[-1] == 3
+        assert efgs is None or efgs.shape == (num_nodes, 3, 3) 
         assert charges is None or charges.shape == (num_nodes,)
         # Aggregate data
         data = {
@@ -97,12 +100,14 @@ class AtomicData(torch_geometric.data.Data):
             "forces_weight": forces_weight,
             "stress_weight": stress_weight,
             "virials_weight": virials_weight,
+            "efgs_weight": efgs_weight,
             "forces": forces,
             "energy": energy,
             "stress": stress,
             "virials": virials,
             "dipole": dipole,
             "charges": charges,
+            "efgs": efgs,
         }
         super().__init__(**data)
 
@@ -157,6 +162,12 @@ class AtomicData(torch_geometric.data.Data):
             else 1
         )
 
+        efgs_weight = (
+            torch.tensor(config.efg_weight, dtype=torch.get_defult_dtype())
+            if config.efg_weight is not None
+            else 1
+        )_
+
         forces = (
             torch.tensor(config.forces, dtype=torch.get_default_dtype())
             if config.forces is not None
@@ -192,6 +203,13 @@ class AtomicData(torch_geometric.data.Data):
             else None
         )
 
+        efgs = (
+            torch.tensor(config.efgs, dtype=torch.get_default_dtype())
+            if config.efgs is not None
+            else None
+        )
+        #EG:  potentially check and reshape
+
         return cls(
             edge_index=torch.tensor(edge_index, dtype=torch.long),
             positions=torch.tensor(config.positions, dtype=torch.get_default_dtype()),
@@ -204,12 +222,14 @@ class AtomicData(torch_geometric.data.Data):
             forces_weight=forces_weight,
             stress_weight=stress_weight,
             virials_weight=virials_weight,
+            efgs_weight=efgs_weight,
             forces=forces,
             energy=energy,
             stress=stress,
             virials=virials,
             dipole=dipole,
             charges=charges,
+            efgs=efgs,
         )
 
 
