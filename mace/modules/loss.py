@@ -152,9 +152,10 @@ def mean_squared_error_efgs(
 ) -> torch.Tensor:
     # efgs: [n_graphs, num_atoms, 3, 3] EG?
     
-    num_atoms = 
+    num_atoms = (ref.ptr[1:] - ref.ptr[:-1]).view(-1, 1, 1) # [n_graphs,] 
     # EG might need to sort out the shapes 
     # EG need to add config weights? 
+    # EG need to add the forces weights too?
     return torch.mean(
             torch.square(
                 (ref["efgs"].view(-1, num_atoms, 3, 3) - pred["efgs"])
