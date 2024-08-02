@@ -327,6 +327,7 @@ def get_loss_fn(
     stress_weight: float,
     virials_weight: float,
     dipole_weight: float,
+    efgs_weight: float,
     dipole_only: bool,
     compute_dipole: bool,
 ) -> torch.nn.Module:
@@ -361,6 +362,10 @@ def get_loss_fn(
             energy_weight=energy_weight,
             forces_weight=forces_weight,
             dipole_weight=dipole_weight,
+        )
+    elif loss == "efgs":
+        loss_fn = modules.WeightedEFGsLoss(
+            efgs_weight=efgs_weight,
         )
     else:
         loss_fn = modules.EnergyForcesLoss(
@@ -478,11 +483,6 @@ def create_error_table(
             "RMSE MU / mDebye / atom",
             "relative MU RMSE %",
         ]
-    elif table_type == "EFGsRMSE":
-        table.field_names = [
-            "config_type",
-            "RMSE EFG / ???", # EG units
-        ]
     elif table_type == "DipoleMAE":
         table.field_names = [
             "config_type",
@@ -498,6 +498,12 @@ def create_error_table(
             "RMSE MU / mDebye / atom",
             "rel MU RMSE %",
         ]
+    elif table_type == "EFGsRMSE":
+        table.field_names = [
+            "config_type",
+            "RMSE EFG / ???", # EG units
+        ]
+
 
     for name in sorted(all_data_loaders, key=custom_key):
         data_loader = all_data_loaders[name]
@@ -591,7 +597,7 @@ def create_error_table(
                     name,
                     f"{metrics['rmse_mu_per_atom'] * 1000:.2f}",
                     f"{metrics['rel_rmse_mu']:.1f}",
-                    f"{metrics["rmse_efgs"].2f", #EG needed?
+                    f"{metrics["rmse_efgs"]:.2f}", #EG needed?
                 ]
             )
         elif table_type == "DipoleMAE":
@@ -611,6 +617,13 @@ def create_error_table(
                     f"{metrics['rel_rmse_f']:.1f}",
                     f"{metrics['rmse_mu_per_atom'] * 1000:.1f}",
                     f"{metrics['rel_rmse_mu']:.1f}",
+                ]
+            )
+        elif table_type == "EFGsRMSE":
+            table.add_row(
+                [
+                    name, 
+                    f"{metrics['rmse_efg']:.2f}",
                 ]
             )
     return table

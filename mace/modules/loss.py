@@ -382,7 +382,7 @@ class WeightedEnergyForcesDipoleLoss(torch.nn.Module):
         )
 
 
-class WeightedEFGSLoss(torch.nn.Module):
+class WeightedEFGsLoss(torch.nn.Module):
     def __init__(self, efgs_weight=1.0) -> None:
         super().__init__()
         self.register_buffer(

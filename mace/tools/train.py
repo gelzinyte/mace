@@ -101,6 +101,12 @@ def valid_err_log(valid_loss, eval_metrics, logger, log_errors, epoch=None):
         logging.info(
             f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_E_per_atom={error_e:.1f} meV, RMSE_F={error_f:.1f} meV / A, RMSE_Mu_per_atom={error_mu:.2f} mDebye"
         )
+    elif log_errors == "EFGsRMSE":
+        error_efgs = eval_metrics["rmse_efgs"] # EG times something? where are eval_metrics coming from?
+        logging.info(
+            f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs:.1f} [UNITS]"
+        )
+
 
 
 def train(
@@ -404,6 +410,10 @@ class MACELoss(Metric):
         self.add_state("mus", default=[], dist_reduce_fx="cat")
         self.add_state("delta_mus", default=[], dist_reduce_fx="cat")
         self.add_state("delta_mus_per_atom", default=[], dist_reduce_fx="cat")
+        # EG check what's happening here
+        self.add_state("efgs_computed", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("efgs", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_efgs", default=[], dist_reduce_fx="cat")
 
     def update(self, batch, output):  # pylint: disable=arguments-differ
         loss = self.loss_fn(pred=output, ref=batch)
@@ -442,6 +452,11 @@ class MACELoss(Metric):
                 (batch.dipole - output["dipole"])
                 / (batch.ptr[1:] - batch.ptr[:-1]).unsqueeze(-1)
             )
+        # EG did I add efgs to batch?
+        if output.get("efgs") is not None and batch.efgs is not None:
+            self.efgs_computed += 1.0
+            self.efgs.append(batch.efgs)
+            self.delta_efgs.append(batch.efgs - output["efgs"])
 
     def convert(self, delta: Union[torch.Tensor, List[torch.Tensor]]) -> np.ndarray:
         if isinstance(delta, list):
@@ -492,5 +507,10 @@ class MACELoss(Metric):
             aux["rmse_mu_per_atom"] = compute_rmse(delta_mus_per_atom)
             aux["rel_rmse_mu"] = compute_rel_rmse(delta_mus, mus)
             aux["q95_mu"] = compute_q95(delta_mus)
+        # Where is efgs_computed coming from
+        if self.EFGs_computed:
+            efgs = self.convert(self.efgs)
+            delta_efgs = self.convert(self.delta_efgs)
+            aux["rmse_efgs"] = compute_rmse(delta_efgs)
 
         return aux["loss"], aux
