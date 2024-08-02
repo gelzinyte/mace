@@ -44,6 +44,7 @@ def fitting_configs_fixture():
         c.info["REF_dipole"] = np.random.normal(0.1, size=3)
         c.new_array("REF_forces", np.random.normal(0.1, size=c.positions.shape))
         c.new_array("Qs", np.random.normal(0.1, size=c.positions.shape[0]))
+        c.new_array("REF_efgs", np.random.normal(0.1, size=(c.positions.shape[0], 9)))
         c.info["REF_stress"] = np.random.normal(0.1, size=6)
         fit_configs.append(c)
 
@@ -371,6 +372,73 @@ def trained_committee_fixture(tmp_path_factory, fitting_configs):
     return MACECalculator(_model_paths, device="cpu")
 
 
+@pytest.fixture(scope="module", name="trained_efgs_model")
+def trained_efgs_fixture(tmp_path_factory, fitting_configs):
+    # EG is water an appropriate test system, even if for tests? 
+    _mace_params = {
+        "name": "MACE",
+        "valid_fraction": 0.05,
+        "energy_weight": 1.0,
+        "forces_weight": 10.0,
+        "stress_weight": 1.0,
+        "model": "EFGsMACE",
+        "num_channels": 8,
+        "max_L": 2,
+        "r_max": 3.5,
+        "batch_size": 5,
+        "max_num_epochs": 10,
+        "ema": None,
+        "ema_decay": 0.99,
+        "amsgrad": None, #EG??
+        "restart_latest": None,
+        "device": "cpu",
+        "seed": 5,
+        "loss": "efgs",
+        "energy_key": "",
+        "forces_key": "",
+        "stress_key": "",
+        "dipole_key": "",
+        "efgs_key": "",
+        "error_table": "EFGsRMSE",
+    }
+
+    tmp_path = tmp_path_factory.mktemp("run_")
+
+    ase.io.write(tmp_path / "fit.xyz", fitting_configs)
+
+    mace_params = _mace_params.copy()
+    mace_params["checkpoints_dir"] = str(tmp_path)
+    mace_params["model_dir"] = str(tmp_path)
+    mace_params["train_file"] = tmp_path / "fit.xyz"
+
+    # make sure run_train.py is using the mace that is currently being tested
+    run_env = os.environ.copy()
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    run_env["PYTHONPATH"] = ":".join(sys.path)
+    print("DEBUG subprocess PYTHONPATH", run_env["PYTHONPATH"])
+
+    cmd = (
+        sys.executable
+        + " "
+        + str(run_train)
+        + " "
+        + " ".join(
+            [
+                (f"--{k}={v}" if v is not None else f"--{k}")
+                for k, v in mace_params.items()
+            ]
+        )
+    )
+
+    p = subprocess.run(cmd.split(), env=run_env, check=True)
+
+    assert p.returncode == 0
+
+    return MACECalculator(
+        tmp_path / "MACE.model", device="cpu", model_type="EFGsMACE"
+    )
+
+
 def test_calculator_node_energy(fitting_configs, trained_model):
     for at in fitting_configs:
         trained_model.calculate(at)
@@ -434,6 +502,13 @@ def test_calculator_dipole(fitting_configs, trained_dipole_model):
 
     assert len(dip) == 3
 
+def test_calculator_efgs(fitting_configs, trained_efgs_model):
+    at = fitting_configs[2].copy()
+    at.calc = trained_efgs_model
+
+    efgs = at.get_electric_field_gradient_tensors()
+
+    assert efgs.shape == (len(at), 3, 3)
 
 def test_calculator_energy_dipole(fitting_configs, trained_energy_dipole_model):
     at = fitting_configs[2].copy()
