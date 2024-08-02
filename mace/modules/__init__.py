@@ -38,6 +38,7 @@ from .models import (
     EnergyDipolesMACE,
     ScaleShiftBOTNet,
     ScaleShiftMACE,
+    EFGsMACE,
 )
 from .radial import BesselBasis, GaussianBasis, PolynomialCutoff, ZBLBasis
 from .symmetric_contraction import SymmetricContraction

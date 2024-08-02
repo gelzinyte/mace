@@ -152,6 +152,7 @@ def run(args: argparse.Namespace) -> None:
             virials_key=args.virials_key,
             dipole_key=args.dipole_key,
             charges_key=args.charges_key,
+            efgs_key-args.efgs_key,
             keep_isolated_atoms=args.keep_isolated_atoms,
         )
 
@@ -204,6 +205,7 @@ def run(args: argparse.Namespace) -> None:
             else:
                 atomic_energies_dict = get_atomic_energies(args.E0s, None, z_table)
 
+    compute_efgs=False
     if args.model == "AtomicDipolesMACE":
         atomic_energies = None
         dipole_only = True
@@ -220,6 +222,14 @@ def run(args: argparse.Namespace) -> None:
             args.compute_forces = True
             compute_virials = False
             args.compute_stress = False
+        elif args.model == "EFGsMACE":
+            # EG check wht these turn off
+            compute_dipole = False
+            compute_energy = False
+            args.compute_forces = False
+            compute_virials = False
+            args.compute_stress = False
+            compute_efgs=True #  EG chck that this is needed 
         else:
             compute_energy = True
             compute_dipole = False
@@ -333,6 +343,10 @@ def run(args: argparse.Namespace) -> None:
             forces_weight=args.forces_weight,
             dipole_weight=args.dipole_weight,
         )
+    elif args.loss == "efgs":
+        loss_fn = modules.WeightedEFGsLoss(
+                efgs_weight=args.efgs_weight,
+        )
     else:
         # Unweighted Energy and Forces loss by default
         loss_fn = modules.WeightedEnergyForcesLoss(energy_weight=1.0, forces_weight=1.0)
@@ -359,19 +373,21 @@ def run(args: argparse.Namespace) -> None:
         args.compute_stress = True
         args.error_table = "PerAtomRMSEstressvirials"
 
+    # EG do I need to mention efgs here? Or just turn these off?
     output_args = {
-        "energy": compute_energy,
+        "energy": compute_energy, #EG energy seems to not go anywhere
         "forces": args.compute_forces,
         "virials": compute_virials,
         "stress": args.compute_stress,
         "dipoles": compute_dipole,
+        "efgs": compute_efgs, 
     }
     logging.info(f"Selected the following outputs: {output_args}")
 
     if args.scaling == "no_scaling":
         args.std = 1.0
         logging.info("No scaling selected")
-    elif (args.mean is None or args.std is None) and args.model != "AtomicDipolesMACE":
+    elif (args.mean is None or args.std is None) and args.model not in ["AtomicDipolesMACE", "EFGsMACE"]:
         args.mean, args.std = modules.scaling_classes[args.scaling](
             train_loader, atomic_energies
         )
@@ -506,6 +522,19 @@ def run(args: argparse.Namespace) -> None:
             ],
             MLP_irreps=o3.Irreps(args.MLP_irreps),
         )
+    elif args.model == "EFGsMACE":
+        assert args.loss == "efgs", "Use efg loss with EFGsMACE"
+        assert args.error_table == "EFGsRMSE", "Use error_table EFGsRMSE with EFGsMACE"
+        # double-check what's actually needed here, e.g. c.f. to MACE
+        model = modules.EFGsMACE(
+            **model_config,
+            correlation=args.correlation, 
+            gate=modules.gate_dict[args.gate],
+            interaction_cls_first=modules.interaction_classes[
+                "RealAgnosticInteractionBlock"
+            ],
+            MLP_irreps=o3.Irreps(args.MLP_irreps),
+        )
     else:
         raise RuntimeError(f"Unknown model: '{args.model}'")
 
@@ -586,6 +615,7 @@ def run(args: argparse.Namespace) -> None:
     swas = [False]
     if args.swa:
         assert dipole_only is False, "Stage Two for dipole fitting not implemented"
+        assert compute_efgs is False, "Stage Two for EFG tensor fitting is not implemented"
         swas.append(True)
         if args.start_swa is None:
             args.start_swa = max(1, args.max_num_epochs // 4 * 3)
