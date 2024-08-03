@@ -54,7 +54,7 @@ def get_dataset_from_xyz(
         virials_key=virials_key,
         dipole_key=dipole_key,
         charges_key=charges_key,
-        efgs_key=efgs_key
+        efgs_key=efgs_key,
         extract_atomic_energies=True,
         keep_isolated_atoms=keep_isolated_atoms,
     )
@@ -71,7 +71,7 @@ def get_dataset_from_xyz(
             virials_key=virials_key,
             dipole_key=dipole_key,
             charges_key=charges_key,
-            efgs_key=efgs_key
+            efgs_key=efgs_key,
             extract_atomic_energies=False,
         )
         logging.info(
@@ -501,9 +501,8 @@ def create_error_table(
     elif table_type == "EFGsRMSE":
         table.field_names = [
             "config_type",
-            "RMSE EFG / ???", # EG units
+            "RMSE EFG / ???",  # EG units
         ]
-
 
     for name in sorted(all_data_loaders, key=custom_key):
         data_loader = all_data_loaders[name]
@@ -597,7 +596,7 @@ def create_error_table(
                     name,
                     f"{metrics['rmse_mu_per_atom'] * 1000:.2f}",
                     f"{metrics['rel_rmse_mu']:.1f}",
-                    f"{metrics["rmse_efgs"]:.2f}", #EG needed?
+                    f"{metrics['rmse_efgs']:.2f}",  # EG needed?
                 ]
             )
         elif table_type == "DipoleMAE":
@@ -622,7 +621,7 @@ def create_error_table(
         elif table_type == "EFGsRMSE":
             table.add_row(
                 [
-                    name, 
+                    name,
                     f"{metrics['rmse_efg']:.2f}",
                 ]
             )

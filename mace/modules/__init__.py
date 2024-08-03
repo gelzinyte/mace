@@ -23,22 +23,22 @@ from .blocks import (
 from .loss import (
     DipoleSingleLoss,
     UniversalLoss,
+    WeightedEFGsLoss,
     WeightedEnergyForcesDipoleLoss,
     WeightedEnergyForcesLoss,
     WeightedEnergyForcesStressLoss,
     WeightedEnergyForcesVirialsLoss,
     WeightedForcesLoss,
     WeightedHuberEnergyForcesStressLoss,
-    WeightedEFGsLoss
 )
 from .models import (
     MACE,
     AtomicDipolesMACE,
     BOTNet,
+    EFGsMACE,
     EnergyDipolesMACE,
     ScaleShiftBOTNet,
     ScaleShiftMACE,
-    EFGsMACE,
 )
 from .radial import BesselBasis, GaussianBasis, PolynomialCutoff, ZBLBasis
 from .symmetric_contraction import SymmetricContraction

@@ -21,9 +21,9 @@ from .blocks import (
     EquivariantProductBasisBlock,
     InteractionBlock,
     LinearDipoleReadoutBlock,
+    LinearEFGReadoutBlock,
     LinearNodeEmbeddingBlock,
     LinearReadoutBlock,
-    LinearEFGReadoutBlock,
     NonLinearDipoleReadoutBlock,
     NonLinearReadoutBlock,
     RadialEmbeddingBlock,
@@ -1088,7 +1088,7 @@ class EFGsMACE(torch.nn.Module):
         atomic_energies: Optional[
             None
         ],  # Just here to make it compatible with energy models, MUST be None
-        radial_type: Optional[str] = "bessel", # EG not in MACE
+        radial_type: Optional[str] = "bessel",  # EG not in MACE
         radial_MLP: Optional[List[int]] = None,
     ):
         super().__init__()
@@ -1187,23 +1187,21 @@ class EFGsMACE(torch.nn.Module):
             if i == num_interactions - 2:
                 self.readouts.append(
                     LinearEFGReadoutBlock(
-                        hidden_irreps_out #EG not 100 sure this is a correct interrim change - double check. 
+                        hidden_irreps_out  # EG not 100 sure this is a correct interrim change - double check.
                     )
                 )
             else:
-                self.readouts.append(
-                    LinearEFGReadoutBlock(hidden_irreps)
-                )
+                self.readouts.append(LinearEFGReadoutBlock(hidden_irreps))
 
     def forward(
         self,
         data: Dict[str, torch.Tensor],
         # EG what is training doing here what was it doing
         training: bool = False,  # pylint: disable=W0613
-        compute_force: bool = False, # EG mu_alpha doesn't access this
+        compute_force: bool = False,  # EG mu_alpha doesn't access this
         compute_virials: bool = False,
         compute_stress: bool = False,
-        compute_displacement: bool = False, # EG displac
+        compute_displacement: bool = False,  # EG displac
     ) -> Dict[str, Optional[torch.Tensor]]:
         assert compute_force is False
         assert compute_virials is False
@@ -1244,23 +1242,18 @@ class EFGsMACE(torch.nn.Module):
                 sc=sc,
                 node_attrs=data["node_attrs"],
             )
-            #EG double-check the shape is correct
+            # EG double-check the shape is correct
             node_efgs = readout(node_feats).squeeze(-1)  # [n_nodes, 3, 3]
             efgs.append(node_efgs)
 
-        # Compute the efgs 
+        # Compute the efgs
         contributions_efgs = torch.stack(
             efgs, dim=-1
         )  # [n_nodes,3,3,n_contributions] EG doublecheck
         final_efgs_spherical = torch.sum(contributions_efgs, dim=-1)  # [n_nodes, 3,3]
-        final_efgs = spherical_to_cartesian(
-            final_efgs_spherical, deivce=data["positions"].device
-        )
+        final_efgs = spherical_to_cartesian(final_efgs_spherical)
 
         output = {
             "efgs": final_efgs,
         }
         return output
-
-
-

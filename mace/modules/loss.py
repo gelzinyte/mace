@@ -146,21 +146,18 @@ def conditional_huber_forces(
 
     return torch.mean(se)
 
-def mean_squared_error_efgs(
-    ref: Batch,
-    pred: TensorDict
-) -> torch.Tensor:
+
+def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # efgs: [n_graphs, num_atoms, 3, 3] EG?
-    
-    num_atoms = (ref.ptr[1:] - ref.ptr[:-1]).view(-1, 1, 1) # [n_graphs,] 
-    # EG might need to sort out the shapes 
-    # EG need to add config weights? 
+
+    num_atoms = (ref.ptr[1:] - ref.ptr[:-1]).view(-1, 1, 1)  # [n_graphs,]
+    # EG might need to sort out the shapes
+    # EG need to add config weights?
     # EG need to add the forces weights too?
     return torch.mean(
-            torch.square(
-                (ref["efgs"].view(-1, num_atoms, 3, 3) - pred["efgs"])
-            )
+        torch.square((ref["efgs"].view(-1, num_atoms, 3, 3) - pred["efgs"]))
     )
+
 
 class WeightedEnergyForcesLoss(torch.nn.Module):
     def __init__(self, energy_weight=1.0, forces_weight=1.0) -> None:
@@ -372,7 +369,9 @@ class WeightedEnergyForcesDipoleLoss(torch.nn.Module):
         return (
             self.energy_weight * weighted_mean_squared_error_energy(ref, pred)
             + self.forces_weight * mean_squared_error_forces(ref, pred)
-            + self.dipole_weight * weighted_mean_squared_error_dipole(ref, pred) * 100 # EG: times 100???
+            + self.dipole_weight
+            * weighted_mean_squared_error_dipole(ref, pred)
+            * 100  # EG: times 100???
         )
 
     def __repr__(self):
@@ -391,9 +390,4 @@ class WeightedEFGsLoss(torch.nn.Module):
         )
 
         def forward(self, ref: Batch, pred: TensorDict) -> torch.Tensor:
-            return(
-                self.efgs_weight * mean_squared_error_efgs(ref, pred)
-            )
-
-
-
+            return self.efgs_weight * mean_squared_error_efgs(ref, pred)

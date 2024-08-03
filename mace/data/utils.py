@@ -38,7 +38,7 @@ class Configuration:
     virials: Optional[Virials] = None  # eV
     dipole: Optional[Vector] = None  # Debye
     charges: Optional[Charges] = None  # atomic unit
-    efgs: Optional[Charges] = None # EG what unit?
+    efgs: Optional[Charges] = None  # EG what unit?
     cell: Optional[Cell] = None
     pbc: Optional[Pbc] = None
 
@@ -47,7 +47,7 @@ class Configuration:
     forces_weight: float = 1.0  # weight of config forces in loss
     stress_weight: float = 1.0  # weight of config stress in loss
     virials_weight: float = 1.0  # weight of config virial in loss
-    efgs_weight: float = 1.0     # weight of config efgs in loss
+    efgs_weight: float = 1.0  # weight of config efgs in loss
     config_type: Optional[str] = DEFAULT_CONFIG_TYPE  # config_type of config
 
 
@@ -98,7 +98,7 @@ def config_from_atoms_list(
                 virials_key=virials_key,
                 dipole_key=dipole_key,
                 charges_key=charges_key,
-                efgs_key=efgs_key, #EG error?
+                efgs_key=efgs_key,  # EG error?
                 config_type_weights=config_type_weights,
             )
         )
@@ -125,7 +125,7 @@ def config_from_atoms(
     stress = atoms.info.get(stress_key, None)  # eV / Ang ^ 3
     virials = atoms.info.get(virials_key, None)
     dipole = atoms.info.get(dipole_key, None)  # Debye
-    efgs = atoms.arrays.get(efgs_key, None) # EG units?
+    efgs = atoms.arrays.get(efgs_key, None)  # EG units?
     # Charges default to 0 instead of None if not found
     charges = atoms.arrays.get(charges_key, np.zeros(len(atoms)))  # atomic unit
     atomic_numbers = np.array(
@@ -178,7 +178,7 @@ def config_from_atoms(
         forces_weight=forces_weight,
         stress_weight=stress_weight,
         virials_weight=virials_weight,
-        efgs_weight = efgs_weight,
+        efgs_weight=efgs_weight,
         config_type=config_type,
         pbc=pbc,
         cell=cell,
@@ -398,5 +398,3 @@ def save_configurations_as_HDF5(configurations: Configurations, _, h5_file) -> N
 
 def write_value(value):
     return value if value is not None else "None"
-
-

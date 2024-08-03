@@ -102,11 +102,12 @@ def valid_err_log(valid_loss, eval_metrics, logger, log_errors, epoch=None):
             f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_E_per_atom={error_e:.1f} meV, RMSE_F={error_f:.1f} meV / A, RMSE_Mu_per_atom={error_mu:.2f} mDebye"
         )
     elif log_errors == "EFGsRMSE":
-        error_efgs = eval_metrics["rmse_efgs"] # EG times something? where are eval_metrics coming from?
+        error_efgs = eval_metrics[
+            "rmse_efgs"
+        ]  # EG times something? where are eval_metrics coming from?
         logging.info(
             f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs:.1f} [UNITS]"
         )
-
 
 
 def train(

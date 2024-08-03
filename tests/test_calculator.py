@@ -438,6 +438,13 @@ def trained_efgs_fixture(tmp_path_factory, fitting_configs):
         tmp_path / "MACE.model", device="cpu", model_type="EFGsMACE"
     )
 
+# def test_loading_fitting_configs(fitting_configs, capsys: pytest.CaptureFixture):
+# 
+# 
+#     _, stderr = capsys.readouterr()
+#     assert stderr == ""
+# 
+# 
 
 def test_calculator_node_energy(fitting_configs, trained_model):
     for at in fitting_configs:
