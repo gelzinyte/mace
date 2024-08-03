@@ -596,7 +596,6 @@ def create_error_table(
                     name,
                     f"{metrics['rmse_mu_per_atom'] * 1000:.2f}",
                     f"{metrics['rel_rmse_mu']:.1f}",
-                    f"{metrics['rmse_efgs']:.2f}",  # EG needed?
                 ]
             )
         elif table_type == "DipoleMAE":

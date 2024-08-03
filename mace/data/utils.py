@@ -160,7 +160,7 @@ def config_from_atoms(
         dipole = np.zeros(3)
         # dipoles_weight = 0.0
     if efgs is None:
-        efgs = np.zeros(len(atoms), 3, 3)
+        efgs = np.zeros((len(atoms), 3, 3))
         efgs_weight = 0.0
 
     return Configuration(

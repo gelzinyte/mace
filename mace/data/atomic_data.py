@@ -163,8 +163,8 @@ class AtomicData(torch_geometric.data.Data):
         )
 
         efgs_weight = (
-            torch.tensor(config.efg_weight, dtype=torch.get_defult_dtype())
-            if config.efg_weight is not None
+            torch.tensor(config.efgs_weight, dtype=torch.get_default_dtype())
+            if config.efgs_weight is not None
             else 1
         )
 

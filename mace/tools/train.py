@@ -509,8 +509,8 @@ class MACELoss(Metric):
             aux["rel_rmse_mu"] = compute_rel_rmse(delta_mus, mus)
             aux["q95_mu"] = compute_q95(delta_mus)
         # Where is efgs_computed coming from
-        if self.EFGs_computed:
-            efgs = self.convert(self.efgs)
+        if self.efgs_computed:
+            # efgs = self.convert(self.efgs)
             delta_efgs = self.convert(self.delta_efgs)
             aux["rmse_efgs"] = compute_rmse(delta_efgs)
 
