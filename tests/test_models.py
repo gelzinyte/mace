@@ -28,7 +28,6 @@ config = data.Configuration(
     energy=-1.5,
     charges=np.array([-2.0, 1.0, 1.0]),
     dipole=np.array([-1.5, 1.5, 2.0]),
-    # EG dummy
     efgs = np.random.random((3, 3, 3))
 )
 # Created the rotated environment
@@ -47,7 +46,6 @@ config_rotated = data.Configuration(
     energy=-1.5,
     charges=np.array([-2.0, 1.0, 1.0]),
     dipole=np.array([-1.5, 1.5, 2.0]),
-    # EG dummy
     efgs = np.random.random((3, 3, 3))
 )
 table = tools.AtomicNumberTable([1, 8])
@@ -204,7 +202,6 @@ def test_energy_dipole_mace():
 
 def test_efgs_mace():
     # create efg MACE model
-    # EG double check this is all/ok
     model_config = dict(
         r_max=5,
         num_bessel=8,
@@ -225,7 +222,7 @@ def test_efgs_mace():
         avg_num_neighbors=3,
         atomic_numbers=table.zs,
         correlation=3,
-        radial_type="gaussian",
+        radial_type="bessel",
     )
     model = modules.EFGsMACE(**model_config)
 
@@ -245,13 +242,12 @@ def test_efgs_mace():
         batch,
         training=True,
     )
-    # sanity check of dipoles being the right shape
-    # EG why unsqueeze?
-    assert output["efgs"][0].unsqueeze(0).shape == atomic_data.efgs.shape
-    # test equivariance of output dipoles
-    output_rotated = np.array(rot @ output["efgs"][0].detach().numpy() @ rot.T)
-    expected = output["dipole"][1].detach().numpy()
-    assert np.allclose(output_rotated, expected)
 
+    # sanity check if the shame is correct 
+    assert output["efgs"].shape == batch.efgs.shape
+    # test equivariance of output efgs
+    output_rotated = np.array(rot @ output["efgs"][0].detach().numpy() @ rot.T)
+    expected = output["efgs"][3].detach().numpy()
+    assert np.allclose(output_rotated, expected)
 
 

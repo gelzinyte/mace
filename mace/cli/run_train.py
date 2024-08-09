@@ -214,6 +214,15 @@ def run(args: argparse.Namespace) -> None:
         args.compute_forces = False
         compute_virials = False
         args.compute_stress = False
+    elif args.model == "EFGsMACE":
+        atomic_energies = None
+        compute_dipole = False
+        compute_energy = False
+        args.compute_forces = False
+        compute_virials = False
+        args.compute_stress = False
+        compute_efgs = True
+        dipole_only = False
     else:
         dipole_only = False
         if args.model == "EnergyDipolesMACE":
@@ -222,14 +231,6 @@ def run(args: argparse.Namespace) -> None:
             args.compute_forces = True
             compute_virials = False
             args.compute_stress = False
-        elif args.model == "EFGsMACE":
-            # EG check wht these turn off
-            compute_dipole = False
-            compute_energy = False
-            args.compute_forces = False
-            compute_virials = False
-            args.compute_stress = False
-            compute_efgs = True  #  EG chck that this is needed
         else:
             compute_energy = True
             compute_dipole = False
@@ -373,9 +374,8 @@ def run(args: argparse.Namespace) -> None:
         args.compute_stress = True
         args.error_table = "PerAtomRMSEstressvirials"
 
-    # EG do I need to mention efgs here? Or just turn these off?
     output_args = {
-        "energy": compute_energy,  # EG energy seems to not go anywhere
+        "energy": compute_energy,
         "forces": args.compute_forces,
         "virials": compute_virials,
         "stress": args.compute_stress,

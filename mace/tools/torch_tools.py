@@ -11,6 +11,7 @@ from typing import Dict
 import numpy as np
 import torch
 from e3nn.io import CartesianTensor
+from e3nn.o3 import ReducedTensorProducts
 
 TensorDict = Dict[str, torch.Tensor]
 
@@ -76,22 +77,51 @@ def set_default_dtype(dtype: str) -> None:
     torch.set_default_dtype(dtype_dict[dtype])
 
 
-def spherical_to_cartesian(t: torch.Tensor):
+def setup_ct_rtp(tensor_symmetry: str):
+    """
+    Prepares e3nn.io.CartesianTensor and o3.ReducedTensorProducts
+    objects for conversion to and from cartesian.
+
+    Accepted options:
+
+        - "ij=ji": the cartesian tensor is symmetric and the conversion is done
+                   from "0e + 2e" features.
+        - "2e":    the cartesian tensor is traceless symmetric and the conversion
+                   is done from "2e" features.
+
+    """
+
+    allowed_symmetries = ["ij=ji", "2e"]
+
+    if tensor_symmetry == "ij=ji":
+        cart_tensor = CartesianTensor(tensor_symmetry)
+        rtp = cart_tensor.reduced_tensor_products()
+        return cart_tensor, rtp
+
+    if tensor_symmetry == "2e":
+        cart_tensor = CartesianTensor("ij=ji")
+        rtp = ReducedTensorProducts("ij=ji", i="1o", filter_ir_out=["2e"])
+        return cart_tensor, rtp
+
+    raise ValueError(
+        f"Got unexpected tensor_symmetry {tensor_symmetry}, expected one of {allowed_symmetries}"
+    )
+
+
+def spherical_to_cartesian(t: torch.Tensor, tensor_symmetry: str):
     """
     Convert spherical notation to cartesian notation
     """
-    stress_cart_tensor = CartesianTensor("ij=ji")
-    stress_rtp = stress_cart_tensor.reduced_tensor_products()
-    return stress_cart_tensor.to_cartesian(t, rtp=stress_rtp)
+    cart_tensor, rtp = setup_ct_rtp(tensor_symmetry)
+    return cart_tensor.to_cartesian(t, rtp)
 
 
-def cartesian_to_spherical(t: torch.Tensor):
+def cartesian_to_spherical(t: torch.Tensor, tensor_symmetry: str):
     """
     Convert cartesian notation to spherical notation
     """
-    stress_cart_tensor = CartesianTensor("ij=ji")
-    stress_rtp = stress_cart_tensor.reduced_tensor_products()
-    return stress_cart_tensor.to_cartesian(t, rtp=stress_rtp)
+    cart_tensor, rtp = setup_ct_rtp(tensor_symmetry)
+    return cart_tensor.from_cartesian(t, rtp=rtp)
 
 
 def voigt_to_matrix(t: torch.Tensor):

@@ -84,9 +84,11 @@ class MACECalculator(Calculator):
                 "stress",
                 "dipole",
             ]
+        elif model_type == "EFGsMACE":
+            self.implemented_properties = ["efgs"]
         else:
             raise ValueError(
-                f"Give a valid model_type: [MACE, DipoleMACE, EnergyDipoleMACE], {model_type} not supported"
+                f"Give a valid model_type: [MACE, DipoleMACE, EnergyDipoleMACE, EFGsMACE], {model_type} not supported"
             )
 
         if "model_path" in kwargs:
@@ -191,6 +193,9 @@ class MACECalculator(Calculator):
         if model_type in ["EnergyDipoleMACE", "DipoleMACE"]:
             dipole = torch.zeros(num_models, 3, device=self.device)
             dict_of_tensors.update({"dipole": dipole})
+        if model_type == "EFGsMACE":
+            efgs = torch.zeros(num_models, num_atoms, 3, 3, device=self.device)
+            dict_of_tensors.update({"efgs": efgs})
         return dict_of_tensors
 
     def _atoms_to_batch(self, atoms):
@@ -254,6 +259,8 @@ class MACECalculator(Calculator):
                     ret_tensors["stress"][i] = out["stress"].detach()
             if self.model_type in ["DipoleMACE", "EnergyDipoleMACE"]:
                 ret_tensors["dipole"][i] = out["dipole"].detach()
+            if self.model_type == "EFGsMACE":
+                ret_tensors["efgs"][i] = out["efgs"].detach()
 
         self.results = {}
         if self.model_type in ["MACE", "EnergyDipoleMACE"]:
@@ -309,6 +316,8 @@ class MACECalculator(Calculator):
                     .cpu()
                     .numpy()
                 )
+        if self.model_type == "EFGsMACE":
+            self.results["efgs"] = torch.mean(ret_tensors["efgs"], dim=0).cpu().numpy()
 
     def get_hessian(self, atoms=None):
         if atoms is None and self.atoms is None:

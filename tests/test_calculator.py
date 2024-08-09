@@ -398,7 +398,7 @@ def trained_efgs_fixture(tmp_path_factory, fitting_configs):
         "forces_key": "",
         "stress_key": "",
         "dipole_key": "",
-        "efgs_key": "",
+        "efgs_key": "REF_efgs",
         "error_table": "EFGsRMSE",
     }
 
@@ -438,13 +438,6 @@ def trained_efgs_fixture(tmp_path_factory, fitting_configs):
         tmp_path / "MACE.model", device="cpu", model_type="EFGsMACE"
     )
 
-# def test_loading_fitting_configs(fitting_configs, capsys: pytest.CaptureFixture):
-# 
-# 
-#     _, stderr = capsys.readouterr()
-#     assert stderr == ""
-# 
-# 
 
 def test_calculator_node_energy(fitting_configs, trained_model):
     for at in fitting_configs:
@@ -510,10 +503,12 @@ def test_calculator_dipole(fitting_configs, trained_dipole_model):
     assert len(dip) == 3
 
 def test_calculator_efgs(fitting_configs, trained_efgs_model):
+
     at = fitting_configs[2].copy()
     at.calc = trained_efgs_model
 
-    efgs = at.get_electric_field_gradient_tensors()
+    at.calc.calculate(atoms=at, properties="efgs")
+    efgs = at.calc.results["efgs"]
 
     assert efgs.shape == (len(at), 3, 3)
 

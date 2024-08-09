@@ -1080,11 +1080,11 @@ class EFGsMACE(torch.nn.Module):
         num_interactions: int,
         num_elements: int,
         hidden_irreps: o3.Irreps,
-        MLP_irreps: o3.Irreps,
+        # MLP_irreps: o3.Irreps,
         avg_num_neighbors: float,
         atomic_numbers: List[int],
         correlation: int,
-        gate: Optional[Callable],
+        # gate: Optional[Callable],
         atomic_energies: Optional[
             None
         ],  # Just here to make it compatible with energy models, MUST be None
@@ -1203,17 +1203,21 @@ class EFGsMACE(torch.nn.Module):
         compute_stress: bool = False,
         compute_displacement: bool = False,  # EG displac
     ) -> Dict[str, Optional[torch.Tensor]]:
+
         assert compute_force is False
         assert compute_virials is False
         assert compute_stress is False
         assert compute_displacement is False
+
         # Setup
         data["node_attrs"].requires_grad_(True)
         data["positions"].requires_grad_(True)
-        num_graphs = data["ptr"].numel() - 1
+        # num_graphs = data["ptr"].numel() - 1
 
         # Embeddings
+        # node_attrs = data["node_attrs"]
         node_feats = self.node_embedding(data["node_attrs"])
+        # orig_node_feats = node_feats.detach().clone()
         vectors, lengths = get_edge_vectors_and_lengths(
             positions=data["positions"],
             edge_index=data["edge_index"],
@@ -1226,7 +1230,6 @@ class EFGsMACE(torch.nn.Module):
 
         # Interactions
         efgs = []
-        # EG where did the itterable things appear?
         for interaction, product, readout in zip(
             self.interactions, self.products, self.readouts
         ):
@@ -1237,21 +1240,22 @@ class EFGsMACE(torch.nn.Module):
                 edge_feats=edge_feats,
                 edge_index=data["edge_index"],
             )
+
             node_feats = product(
                 node_feats=node_feats,
                 sc=sc,
                 node_attrs=data["node_attrs"],
             )
-            # EG double-check the shape is correct
-            node_efgs = readout(node_feats).squeeze(-1)  # [n_nodes, 3, 3]
+
+            readout_out = readout(node_feats)
+            node_efgs = readout_out.squeeze(-1)  # [n_nodes, 5]
             efgs.append(node_efgs)
 
         # Compute the efgs
-        contributions_efgs = torch.stack(
-            efgs, dim=-1
-        )  # [n_nodes,3,3,n_contributions] EG doublecheck
-        final_efgs_spherical = torch.sum(contributions_efgs, dim=-1)  # [n_nodes, 3,3]
-        final_efgs = spherical_to_cartesian(final_efgs_spherical)
+        contributions_efgs = torch.stack(efgs, dim=-1)  # [n_nodes,5, num_layers]
+        final_efgs_spherical = torch.sum(contributions_efgs, dim=-1)  # [n_nodes, 5]
+
+        final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="2e")
 
         output = {
             "efgs": final_efgs,

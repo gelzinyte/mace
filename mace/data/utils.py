@@ -98,7 +98,7 @@ def config_from_atoms_list(
                 virials_key=virials_key,
                 dipole_key=dipole_key,
                 charges_key=charges_key,
-                efgs_key=efgs_key,  # EG error?
+                efgs_key=efgs_key,
                 config_type_weights=config_type_weights,
             )
         )
@@ -162,6 +162,8 @@ def config_from_atoms(
     if efgs is None:
         efgs = np.zeros((len(atoms), 3, 3))
         efgs_weight = 0.0
+    else:
+        efgs = efgs.reshape((-1, 3, 3))
 
     return Configuration(
         atomic_numbers=atomic_numbers,

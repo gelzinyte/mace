@@ -621,7 +621,7 @@ def create_error_table(
             table.add_row(
                 [
                     name,
-                    f"{metrics['rmse_efg']:.2f}",
+                    f"{metrics['rmse_efgs']:.2f}",
                 ]
             )
     return table
