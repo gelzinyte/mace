@@ -217,6 +217,7 @@ def test_efgs_mace():
         num_elements=2,
         hidden_irreps=o3.Irreps("16x0e + 16x1o + 16x2e"),
         MLP_irreps=o3.Irreps("16x0e"),
+        #MLP_irreps=o3.Irreps("16x0e + 16x1o + 16x2e"),
         gate=torch.nn.functional.silu,
         atomic_energies=None,
         avg_num_neighbors=3,

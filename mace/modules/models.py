@@ -16,12 +16,12 @@ from mace.modules.radial import ZBLBasis
 from mace.tools.scatter import scatter_sum
 from mace.tools.torch_tools import spherical_to_cartesian
 
-from .blocks import (
+from .blocks import (  # NonLinearEFGsReadoutBlock,
     AtomicEnergiesBlock,
     EquivariantProductBasisBlock,
     InteractionBlock,
     LinearDipoleReadoutBlock,
-    LinearEFGReadoutBlock,
+    LinearEFGsReadoutBlock,
     LinearNodeEmbeddingBlock,
     LinearReadoutBlock,
     NonLinearDipoleReadoutBlock,
@@ -1088,7 +1088,7 @@ class EFGsMACE(torch.nn.Module):
         atomic_energies: Optional[
             None
         ],  # Just here to make it compatible with energy models, MUST be None
-        radial_type: Optional[str] = "bessel",  # EG not in MACE
+        radial_type: Optional[str] = "bessel",
         radial_MLP: Optional[List[int]] = None,
     ):
         super().__init__()
@@ -1153,7 +1153,7 @@ class EFGsMACE(torch.nn.Module):
         self.products = torch.nn.ModuleList([prod])
 
         self.readouts = torch.nn.ModuleList()
-        self.readouts.append(LinearEFGReadoutBlock(hidden_irreps))
+        self.readouts.append(LinearEFGsReadoutBlock(hidden_irreps))
 
         for i in range(num_interactions - 1):
             if i == num_interactions - 2:
@@ -1161,8 +1161,8 @@ class EFGsMACE(torch.nn.Module):
                     len(hidden_irreps) > 2
                 ), "To predict EFG tensors use at least l=2 hidden_irreps"
                 hidden_irreps_out = str(
-                    hidden_irreps[1]
-                )  # Select only l=1 vectors for last layer
+                    hidden_irreps[2]
+                )  # Select only l=2 tensors for last layer
             else:
                 hidden_irreps_out = hidden_irreps
             inter = interaction_cls(
@@ -1186,12 +1186,12 @@ class EFGsMACE(torch.nn.Module):
             self.products.append(prod)
             if i == num_interactions - 2:
                 self.readouts.append(
-                    LinearEFGReadoutBlock(
-                        hidden_irreps_out  # EG not 100 sure this is a correct interrim change - double check.
-                    )
+                    # NonLinearEFGsReadoutBlock(hidden_irreps_out, MLP_irreps, gate)
+                    # why does this fail with hidden_irreps now? Even if it's linear still?
+                    LinearEFGsReadoutBlock(hidden_irreps_out)
                 )
             else:
-                self.readouts.append(LinearEFGReadoutBlock(hidden_irreps))
+                self.readouts.append(LinearEFGsReadoutBlock(hidden_irreps))
 
     def forward(
         self,
@@ -1241,7 +1241,7 @@ class EFGsMACE(torch.nn.Module):
                 edge_index=data["edge_index"],
             )
 
-            node_feats = product(
+            node_feats = product(  # 6, 144; then 6, 80
                 node_feats=node_feats,
                 sc=sc,
                 node_attrs=data["node_attrs"],
