@@ -185,7 +185,10 @@ def run(args: argparse.Namespace) -> None:
     logging.info(z_table)
 
     if atomic_energies_dict is None or len(atomic_energies_dict) == 0:
-        if args.E0s.lower() == "foundation":
+        # EG make this nicer
+        if args.model == "EFGsMACE":
+            pass
+        elif args.E0s.lower() == "foundation":
             assert args.foundation_model is not None
             logging.info("Using atomic energies from foundation model")
             z_table_foundation = AtomicNumberTable(
@@ -532,11 +535,11 @@ def run(args: argparse.Namespace) -> None:
         model = modules.EFGsMACE(
             **model_config,
             correlation=args.correlation,
-            gate=modules.gate_dict[args.gate],
+            # gate=modules.gate_dict[args.gate],
             interaction_cls_first=modules.interaction_classes[
                 "RealAgnosticInteractionBlock"
             ],
-            MLP_irreps=o3.Irreps(args.MLP_irreps),
+            # MLP_irreps=o3.Irreps(args.MLP_irreps),
         )
     else:
         raise RuntimeError(f"Unknown model: '{args.model}'")
