@@ -113,6 +113,11 @@ def spherical_to_cartesian(t: torch.Tensor, tensor_symmetry: str):
     Convert spherical notation to cartesian notation
     """
     cart_tensor, rtp = setup_ct_rtp(tensor_symmetry)
+    tensor_device = t.get_device()
+
+    rtp.change_of_basis = rtp.change_of_basis.to(tensor_device)
+    #rtp.change_of_basis.get_default_device()
+
     return cart_tensor.to_cartesian(t, rtp)
 
 
