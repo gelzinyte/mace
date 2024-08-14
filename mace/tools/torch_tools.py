@@ -115,8 +115,10 @@ def spherical_to_cartesian(t: torch.Tensor, tensor_symmetry: str):
     cart_tensor, rtp = setup_ct_rtp(tensor_symmetry)
     tensor_device = t.get_device()
 
+    if tensor_device == -1:
+        tensor_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     rtp.change_of_basis = rtp.change_of_basis.to(tensor_device)
-    #rtp.change_of_basis.get_default_device()
 
     return cart_tensor.to_cartesian(t, rtp)
 

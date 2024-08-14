@@ -522,14 +522,19 @@ def create_error_table(
         if log_wandb:
             wandb_log_dict = {}
             if "rmse_e_per_atom" in metrics:
-                wandb_log_dictandb[name+"_final_rmse_e_per_atom"]= metrics["rmse_e_per_atom"] * 1e3,  # meV / atom
+                wandb_log_dict[name + "_final_rmse_e_per_atom"] = (
+                    metrics["rmse_e_per_atom"] * 1e3,
+                )  # meV / atom
             if "rmse_f" in metrics:
-                wandb_log_dict[name + "_final_rmse_f"]= metrics["rmse_f"] * 1e3,  # meV / A
+                wandb_log_dict[name + "_final_rmse_f"] = (
+                    metrics["rmse_f"] * 1e3,
+                )  # meV / A
             if "rel_rmse_f" in metrics:
-                wandb_log_dict[name + "_final_rel_rmse_f"]=metrics["rel_rmse_f"],
+                wandb_log_dict[name + "_final_rel_rmse_f"] = (metrics["rel_rmse_f"],)
             if "rmse_efgs" in metrics:
-                wandb_log_dict[name + "_final_rmse_efgs"]=metrics["rmse_efgs"],
+                wandb_log_dict[name + "_final_rmse_efgs"] = (metrics["rmse_efgs"],)
 
+            print(wandb_log_dict)
             wandb.log(wandb_log_dict)
         if table_type == "TotalRMSE":
             table.add_row(
@@ -624,7 +629,7 @@ def create_error_table(
             table.add_row(
                 [
                     name,
-                    f"{metrics['rmse_efgs']:.2f}",
+                    f"{metrics['rmse_efgs']*1000:.1f}",
                 ]
             )
     return table

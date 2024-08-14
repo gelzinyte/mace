@@ -231,17 +231,17 @@ def train(
                     wandb_log_dict = {
                         "epoch": epoch,
                         "valid_loss": valid_loss,
-                        #"valid_rmse_e_per_atom": eval_metrics["rmse_e_per_atom"],
-                        #"valid_rmse_f": eval_metrics["rmse_f"],
+                        # "valid_rmse_e_per_atom": eval_metrics["rmse_e_per_atom"],
+                        # "valid_rmse_f": eval_metrics["rmse_f"],
                     }
                     if "rmse_e_per_atom" in eval_metrics:
-                        wandb_log_dict["valid_rmse_e_per_atom"]: eval_metrics["rmse_e_per_atom"]
+                        wandb_log_dict["valid_rmse_e_per_atom"] = eval_metrics[
+                            "rmse_e_per_atom"
+                        ]
                     if "rmse_f" in eval_metrics:
-                        wandb_log_dict["valid_rmse_f"]: eval_metrics["rmse_f"]
+                        wandb_log_dict["valid_rmse_f"] = eval_metrics["rmse_f"]
                     if "rmse_efgs" in eval_metrics:
-                        wandb_log_dict["valid_rmse_efgs"]: eval_metrics["rmse_efgs"]
-
-
+                        wandb_log_dict["valid_rmse_efgs"] = eval_metrics["rmse_efgs"]
 
                     wandb.log(wandb_log_dict)
 
@@ -462,7 +462,6 @@ class MACELoss(Metric):
                 (batch.dipole - output["dipole"])
                 / (batch.ptr[1:] - batch.ptr[:-1]).unsqueeze(-1)
             )
-        # EG did I add efgs to batch?
         if output.get("efgs") is not None and batch.efgs is not None:
             self.efgs_computed += 1.0
             self.efgs.append(batch.efgs)
