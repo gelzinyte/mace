@@ -22,6 +22,7 @@ Stress = np.ndarray  # [6, ], [3,3], [9, ]
 Virials = np.ndarray  # [6, ], [3,3], [9, ]
 Charges = np.ndarray  # [..., 1]
 Cell = np.ndarray  # [3,3]
+EFGs = np.ndarray # [..., 3, 3]
 Pbc = tuple  # (3,)
 
 DEFAULT_CONFIG_TYPE = "Default"
@@ -38,7 +39,7 @@ class Configuration:
     virials: Optional[Virials] = None  # eV
     dipole: Optional[Vector] = None  # Debye
     charges: Optional[Charges] = None  # atomic unit
-    efgs: Optional[Charges] = None  # EG what unit?
+    efgs: Optional[EFGs] = None  # atomic unit 
     cell: Optional[Cell] = None
     pbc: Optional[Pbc] = None
 
@@ -125,7 +126,7 @@ def config_from_atoms(
     stress = atoms.info.get(stress_key, None)  # eV / Ang ^ 3
     virials = atoms.info.get(virials_key, None)
     dipole = atoms.info.get(dipole_key, None)  # Debye
-    efgs = atoms.arrays.get(efgs_key, None)  # EG units?
+    efgs = atoms.arrays.get(efgs_key, None)  #  Atomic units 
     # Charges default to 0 instead of None if not found
     charges = atoms.arrays.get(charges_key, np.zeros(len(atoms)))  # atomic unit
     atomic_numbers = np.array(
