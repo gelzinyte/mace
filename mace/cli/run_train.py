@@ -535,11 +535,11 @@ def run(args: argparse.Namespace) -> None:
         model = modules.EFGsMACE(
             **model_config,
             correlation=args.correlation,
-            # gate=modules.gate_dict[args.gate],
+             gate=modules.gate_dict[args.gate],
             interaction_cls_first=modules.interaction_classes[
                 "RealAgnosticInteractionBlock"
             ],
-            # MLP_irreps=o3.Irreps(args.MLP_irreps),
+             MLP_irreps=o3.Irreps(args.MLP_irreps),
         )
     else:
         raise RuntimeError(f"Unknown model: '{args.model}'")

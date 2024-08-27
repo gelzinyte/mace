@@ -59,7 +59,7 @@ class LinearReadoutBlock(torch.nn.Module):
 @compile_mode("script")
 class NonLinearReadoutBlock(torch.nn.Module):
     def __init__(
-        self, irreps_in: o3.Irreps, MLP_irreps: o3.Irreps, gate: Optional[Callable]
+        self, irreps_in: o3.Irreps, LP_irreps: o3.Irreps, gate: Optional[Callable]
     ):
         super().__init__()
         self.hidden_irreps = MLP_irreps
@@ -165,7 +165,6 @@ class NonLinearEFGsReadoutBlock(torch.nn.Module):
         )
         irreps_gates = o3.Irreps([mul, "0e"] for mul, _ in irreps_gated)
         if irreps_gates.dim + irreps_gated.dim == 0:
-            # EG track temporarily
             warnings.warn("No nonlinearities associated with non-linear gate")
         self.equivariant_nonlin = nn.Gate(
             irreps_scalars=irreps_scalars,

@@ -16,7 +16,7 @@ from mace.modules.radial import ZBLBasis
 from mace.tools.scatter import scatter_sum
 from mace.tools.torch_tools import spherical_to_cartesian
 
-from .blocks import (  # NonLinearEFGsReadoutBlock,
+from .blocks import ( 
     AtomicEnergiesBlock,
     EquivariantProductBasisBlock,
     InteractionBlock,
@@ -24,6 +24,7 @@ from .blocks import (  # NonLinearEFGsReadoutBlock,
     LinearEFGsReadoutBlock,
     LinearNodeEmbeddingBlock,
     LinearReadoutBlock,
+    NonLinearEFGsReadoutBlock,
     NonLinearDipoleReadoutBlock,
     NonLinearReadoutBlock,
     RadialEmbeddingBlock,
@@ -1080,11 +1081,11 @@ class EFGsMACE(torch.nn.Module):
         num_interactions: int,
         num_elements: int,
         hidden_irreps: o3.Irreps,
-        # MLP_irreps: o3.Irreps,
+        MLP_irreps: o3.Irreps,
         avg_num_neighbors: float,
         atomic_numbers: List[int],
         correlation: int,
-        # gate: Optional[Callable],
+        gate: Optional[Callable],
         atomic_energies: Optional[
             None
         ],  # Just here to make it compatible with energy models, MUST be None
@@ -1160,9 +1161,10 @@ class EFGsMACE(torch.nn.Module):
                 assert (
                     len(hidden_irreps) > 2
                 ), "To predict EFG tensors use at least l=2 hidden_irreps"
-                hidden_irreps_out = str(
-                    hidden_irreps[2]
-                )  # Select only l=2 tensors for last layer
+                #hidden_irreps_out = str(
+                #    hidden_irreps[2]
+                #)  # Select only l=2 tensors for last layer
+                hidden_irreps_out = hidden_irreps 
             else:
                 hidden_irreps_out = hidden_irreps
             inter = interaction_cls(
@@ -1186,9 +1188,9 @@ class EFGsMACE(torch.nn.Module):
             self.products.append(prod)
             if i == num_interactions - 2:
                 self.readouts.append(
-                    # NonLinearEFGsReadoutBlock(hidden_irreps_out, MLP_irreps, gate)
+                    NonLinearEFGsReadoutBlock(hidden_irreps_out, MLP_irreps, gate)
                     # why does this fail with hidden_irreps now? Even if it's linear still?
-                    LinearEFGsReadoutBlock(hidden_irreps_out)
+                    #LinearEFGsReadoutBlock(hidden_irreps_out)
                 )
             else:
                 self.readouts.append(LinearEFGsReadoutBlock(hidden_irreps))

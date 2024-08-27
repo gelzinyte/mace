@@ -216,9 +216,10 @@ def test_efgs_mace():
         num_interactions=2,
         num_elements=2,
         hidden_irreps=o3.Irreps("16x0e + 16x1o + 16x2e"),
-        #MLP_irreps=o3.Irreps("16x0e"),
+        # should be the correct shape for non-linear readout, which expects only a 2e
+        MLP_irreps=o3.Irreps("16x2e"), 
         #MLP_irreps=o3.Irreps("16x0e + 16x1o + 16x2e"),
-        #gate=torch.nn.functional.silu,
+        gate=torch.nn.functional.silu,
         atomic_energies=None,
         avg_num_neighbors=3,
         atomic_numbers=table.zs,
