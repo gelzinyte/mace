@@ -59,7 +59,7 @@ class LinearReadoutBlock(torch.nn.Module):
 @compile_mode("script")
 class NonLinearReadoutBlock(torch.nn.Module):
     def __init__(
-        self, irreps_in: o3.Irreps, LP_irreps: o3.Irreps, gate: Optional[Callable]
+        self, irreps_in: o3.Irreps, MLP_irreps: o3.Irreps, gate: Optional[Callable]
     ):
         super().__init__()
         self.hidden_irreps = MLP_irreps
