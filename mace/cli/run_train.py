@@ -394,6 +394,8 @@ def run(args: argparse.Namespace) -> None:
         "AtomicDipolesMACE",
         "EFGsMACE",
     ]:
+        if args.model == "EFGsMACE":
+            assert args.scaling.starts_with("efg_")
         args.mean, args.std = modules.scaling_classes[args.scaling](
             train_loader, atomic_energies
         )
@@ -529,9 +531,9 @@ def run(args: argparse.Namespace) -> None:
             MLP_irreps=o3.Irreps(args.MLP_irreps),
         )
     elif args.model == "EFGsMACE":
+        # EG add scale (from arguments?
         assert args.loss == "efgs", "Use efg loss with EFGsMACE"
         assert args.error_table == "EFGsRMSE", "Use error_table EFGsRMSE with EFGsMACE"
-        # double-check what's actually needed here, e.g. c.f. to MACE
         model = modules.EFGsMACE(
             **model_config,
             correlation=args.correlation,
@@ -539,7 +541,9 @@ def run(args: argparse.Namespace) -> None:
             interaction_cls_first=modules.interaction_classes[
                 "RealAgnosticInteractionBlock"
             ],
-             MLP_irreps=o3.Irreps(args.MLP_irreps),
+            MLP_irreps=o3.Irreps(args.MLP_irreps),
+            output_scales = args.std,
+            output_shifts = args.mean, 
         )
     else:
         raise RuntimeError(f"Unknown model: '{args.model}'")

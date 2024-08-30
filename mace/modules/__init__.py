@@ -19,6 +19,7 @@ from .blocks import (
     RealAgnosticResidualInteractionBlock,
     ResidualElementDependentInteractionBlock,
     ScaleShiftBlock,
+    AtomicScaleShiftBlock,
 )
 from .loss import (
     DipoleSingleLoss,
@@ -64,6 +65,7 @@ scaling_classes: Dict[str, Callable] = {
     "std_scaling": compute_mean_std_atomic_inter_energy,
     "rms_forces_scaling": compute_mean_rms_energy_forces,
     "rms_dipoles_scaling": compute_rms_dipoles,
+    "efg_mean_std_sqrt_det": compute_mean_std_sqrt_abs_det_efgs,
 }
 
 gate_dict: Dict[str, Optional[Callable]] = {
@@ -81,6 +83,7 @@ __all__ = [
     "LinearReadoutBlock",
     "EquivariantProductBasisBlock",
     "ScaleShiftBlock",
+    "AtomicScaleShiftBlock",
     "LinearDipoleReadoutBlock",
     "NonLinearDipoleReadoutBlock",
     "InteractionBlock",
@@ -94,6 +97,7 @@ __all__ = [
     "ScaleShiftBOTNet",
     "AtomicDipolesMACE",
     "EnergyDipolesMACE",
+    "EFGsMACE",
     "WeightedEnergyForcesLoss",
     "WeightedForcesLoss",
     "WeightedEnergyForcesVirialsLoss",

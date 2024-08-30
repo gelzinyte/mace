@@ -270,7 +270,7 @@ def compute_mean_std_atomic_inter_energy(
         avg_atom_inter_es_list.append(
             (batch.energy - graph_e0s) / graph_sizes
         )  # {[n_graphs], }
-
+    
     avg_atom_inter_es = torch.cat(avg_atom_inter_es_list)  # [total_n_graphs]
     mean = to_numpy(torch.mean(avg_atom_inter_es)).item()
     std = to_numpy(torch.std(avg_atom_inter_es)).item()
@@ -412,3 +412,29 @@ def compute_fixed_charge_dipole(
     return scatter_sum(
         src=mu, index=batch.unsqueeze(-1), dim=0, dim_size=num_graphs
     )  # [N_graphs,3]
+
+def compute_mean_cbrt_abs_det_of_efgs(
+        data_loader: torch.utils.data.DataLoader, 
+) -> Tuple[torch.Tensor, torch.Tensor]:
+
+    #has to be  per element...
+    # can compute the determinants
+    # then multiply by batch.node_attrs (one-hot)
+    # and sum over the axis!
+    
+    dets_list = []
+
+    for batch in data_loader:
+        dets = torch.linalg.det(batch.efgs)
+        dets = torch.pow(torch.absolute(dets), 1/3)
+        dets_list.append(dets)
+
+    dets = torch.cat(dets_list, dim=0)
+    import pdb; pdb.set_trace()
+    mean = to_numpy(torch.mean(dets)).item()
+    std = to_numpy(torch.std(dets)).item()
+
+    return mean, std
+
+
+

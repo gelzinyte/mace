@@ -29,6 +29,7 @@ from .blocks import (
     NonLinearReadoutBlock,
     RadialEmbeddingBlock,
     ScaleShiftBlock,
+    AtomicScaleShiftBlock,
 )
 from .utils import (
     compute_fixed_charge_dipole,
@@ -1091,6 +1092,8 @@ class EFGsMACE(torch.nn.Module):
         ],  # Just here to make it compatible with energy models, MUST be None
         radial_type: Optional[str] = "bessel",
         radial_MLP: Optional[List[int]] = None,
+        output_scales: Optional[np.ndarray] = None,
+        output_shifts: Optional[np.ndarray] = None, # EG same idea as atomic energies 
     ):
         super().__init__()
         self.register_buffer(
@@ -1124,6 +1127,16 @@ class EFGsMACE(torch.nn.Module):
         )
         if radial_MLP is None:
             radial_MLP = [64, 64, 64]
+
+        if output_scales is None:
+            output_scales = np.ones((num_elements,))
+        if output_shifts is None:
+            output_shifts = np.zeros((num_elements,))
+
+        self.scale_shift_fn = AtomicScaleShiftBlock(
+            atomic_scales = output_scales,
+            atomic_shifts = output_shifts,
+        )
 
         # Interactions and readouts
         inter = interaction_cls_first(
@@ -1258,6 +1271,10 @@ class EFGsMACE(torch.nn.Module):
         final_efgs_spherical = torch.sum(contributions_efgs, dim=-1)  # [n_nodes, 5]
 
         final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="2e")
+
+        #scale shift
+        final_efgs = self.scale_shift_fn(final_efgs, data["node_attrs"])
+
 
         output = {
             "efgs": final_efgs,

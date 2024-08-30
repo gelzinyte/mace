@@ -11,8 +11,10 @@ from mace.modules import (
     SymmetricContraction,
     WeightedEnergyForcesLoss,
     WeightedHuberEnergyForcesStressLoss,
+    AtomicScaleShiftBlock,
 )
 from mace.tools import AtomicNumberTable, scatter, to_numpy, torch_geometric
+from mace import modules
 
 config = Configuration(
     atomic_numbers=np.array([8, 1, 1]),
@@ -33,6 +35,7 @@ config = Configuration(
     energy=-1.5,
     # stress if voigt 6 notation
     stress=np.array([1.0, 0.0, 0.5, 0.0, -1.0, 0.0]),
+    efgs=np.random.random((3, 3, 3))
 )
 
 table = AtomicNumberTable([1, 8])
@@ -110,3 +113,39 @@ class TestBlocks:
         out = scatter.scatter_sum(src=energies, index=batch.batch, dim=-1, reduce="sum")
         out = to_numpy(out)
         assert np.allclose(out, np.array([5.0, 5.0]))
+
+    def test_atomic_scale_shift(self):
+
+        # for hydrogen and oxygen
+        mock_scales = np.array([2.0, 3.0])
+        mock_shifts = np.array([100.0, 200.0])
+
+        atomic_scale_shift_block = AtomicScaleShiftBlock(
+            atomic_scales = mock_scales,
+            atomic_shifts = mock_shifts,
+        )
+
+        data = AtomicData.from_config(config, z_table=table, cutoff=3.0)
+        data_loader = torch_geometric.dataloader.DataLoader(
+            dataset=[data, data],
+            batch_size=2,
+            shuffle=True,
+            drop_last=False,
+        )
+ 
+        batch = next(iter(data_loader))
+
+        scaled_shifted_efgs = atomic_scale_shift_block(
+            x = batch.efgs,
+            elements = batch.node_attrs
+        )
+        
+        # compute expected_vals 
+        mock_scales = torch.from_numpy(mock_scales)
+        mock_shifts = torch.from_numpy(mock_shifts)
+        batch_scales = torch.matmul(batch.node_attrs, mock_scales).view(-1, 1, 1)
+        batch_shifts = torch.matmul(batch.node_attrs, mock_shifts).view(-1, 1, 1)
+        expected_efgs = batch_scales * batch.efgs + batch_shifts
+
+        assert np.allclose(scaled_shifted_efgs, expected_efgs)
+

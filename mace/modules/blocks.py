@@ -208,6 +208,45 @@ class AtomicEnergiesBlock(torch.nn.Module):
 
 
 @compile_mode("script")
+class AtomicScaleShiftBlock(torch.nn.Module):
+    atomic_scales: torch.Tensor
+    atomic_shifts: torch.Tensor
+
+    # EG make shifts/scales optional? 
+    def __init__(self, atomic_scales: Union[np.ndarray, torch.Tensor], atomic_shifts: Union[np.ndarray, torch.Tensor]):
+
+        super().__init__()
+
+        assert len(atomic_scales.shape) == 1
+        assert len(atomic_shifts.shape) == 1
+
+        self.register_buffer(
+                "atomic_scales", torch.tensor(atomic_scales, dtype=torch.get_default_dtype())
+        ) # [n_elements, ]
+        self.register_buffer(
+                "atomic_shifts", torch.tensor(atomic_shifts, dtype=torch.get_default_dtype())
+        ) # [n_elements, ]
+
+    def forward(
+            self,
+            x: torch.Tensor, # model output, to be scaled and shifted, [..., 3, 3] for efgs
+            elements: torch.Tensor, # one-hot of elements in the batch, [..., n_elements]
+            ) -> torch.Tensor:
+
+        scales = torch.matmul(elements, self.atomic_scales).view(-1, 1, 1) # [..., 1, 1] to match x
+        shifts = torch.matmul(elements, self.atomic_shifts).view(-1, 1, 1) 
+
+        # EG automatically determine the expected shapes. 
+        return scales * x + shifts
+
+    def __repr__(self):
+        formatted_shifts = ", ".join([f"{x:.4f}" for x in self.atomic_shifts])
+        formatted_scales = ", ".join([f"{x:.4f}" for x in self.atomic_scales])
+        return f"{self.__clas__.__name__}(atomic_shifts=[{formatted_shifts}], atomic_scales=[{formatted_scales}]"
+
+
+
+@compile_mode("script")
 class RadialEmbeddingBlock(torch.nn.Module):
     def __init__(
         self,
@@ -813,3 +852,4 @@ class ScaleShiftBlock(torch.nn.Module):
         return (
             f"{self.__class__.__name__}(scale={self.scale:.6f}, shift={self.shift:.6f})"
         )
+
