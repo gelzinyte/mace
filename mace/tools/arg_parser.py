@@ -212,7 +212,7 @@ def build_default_arg_parser() -> argparse.ArgumentParser:
         help="type of scaling to the output",
         type=str,
         default="rms_forces_scaling",
-        choices=["std_scaling", "rms_forces_scaling", "no_scaling"],
+        choices=["std_scaling", "rms_forces_scaling", "no_scaling", "efgs_cbrt_det_scaling"],
     )
     parser.add_argument(
         "--avg_num_neighbors",
@@ -765,7 +765,7 @@ def build_preprocess_arg_parser() -> argparse.ArgumentParser:
         help="type of scaling to the output",
         type=str,
         default="rms_forces_scaling",
-        choices=["std_scaling", "rms_forces_scaling", "no_scaling"],
+        choices=["std_scaling", "rms_forces_scaling", "no_scaling", "efgs_cbrt_det_scaling"],
     )
     parser.add_argument(
         "--E0s",

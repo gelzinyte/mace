@@ -226,7 +226,6 @@ def test_efgs_mace():
         correlation=3,
         radial_type="bessel",
     )
-    model = modules.EFGsMACE(**model_config)
 
     atomic_data = data.AtomicData.from_config(config, z_table=table, cutoff=3.0)
     atomic_data2 = data.AtomicData.from_config(
@@ -239,6 +238,11 @@ def test_efgs_mace():
         shuffle=False,
         drop_last=False,
     )
+    
+    per_element_scaling = modules.compute_mean_cbrt_abs_det_of_efgs(data_loader)
+
+    model = modules.EFGsMACE(output_scales=per_element_scaling, **model_config)
+
     batch = next(iter(data_loader))
     output = model(
         batch,

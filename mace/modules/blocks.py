@@ -212,7 +212,6 @@ class AtomicScaleShiftBlock(torch.nn.Module):
     atomic_scales: torch.Tensor
     atomic_shifts: torch.Tensor
 
-    # EG make shifts/scales optional? 
     def __init__(self, atomic_scales: Union[np.ndarray, torch.Tensor], atomic_shifts: Union[np.ndarray, torch.Tensor]):
 
         super().__init__()
@@ -242,7 +241,7 @@ class AtomicScaleShiftBlock(torch.nn.Module):
     def __repr__(self):
         formatted_shifts = ", ".join([f"{x:.4f}" for x in self.atomic_shifts])
         formatted_scales = ", ".join([f"{x:.4f}" for x in self.atomic_scales])
-        return f"{self.__clas__.__name__}(atomic_shifts=[{formatted_shifts}], atomic_scales=[{formatted_scales}]"
+        return f"{self.__class__.__name__}(atomic_shifts=[{formatted_shifts}], atomic_scales=[{formatted_scales}]"
 
 
 

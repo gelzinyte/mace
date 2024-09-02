@@ -417,24 +417,22 @@ def compute_mean_cbrt_abs_det_of_efgs(
         data_loader: torch.utils.data.DataLoader, 
 ) -> Tuple[torch.Tensor, torch.Tensor]:
 
-    #has to be  per element...
-    # can compute the determinants
-    # then multiply by batch.node_attrs (one-hot)
-    # and sum over the axis!
-    
     dets_list = []
-
     for batch in data_loader:
+
         dets = torch.linalg.det(batch.efgs)
         dets = torch.pow(torch.absolute(dets), 1/3)
-        dets_list.append(dets)
+
+        elements = batch.node_attrs
+
+        dets_by_element = dets.view((-1, 1)) * elements # [..., n_elemnets]
+        dets_list.append(dets_by_element)
 
     dets = torch.cat(dets_list, dim=0)
-    import pdb; pdb.set_trace()
-    mean = to_numpy(torch.mean(dets)).item()
-    std = to_numpy(torch.std(dets)).item()
+    mean = to_numpy(dets.mean(axis=0))
+    # std = to_numpy(dets.std(axis=0))
 
-    return mean, std
+    return mean 
 
 
 

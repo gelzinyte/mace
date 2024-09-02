@@ -161,8 +161,6 @@ def train(
         )
         valid_err_log(valid_loss, eval_metrics, logger, log_errors, None)
 
-
-
     while epoch < max_num_epochs:
         # LR scheduler and SWA update
         if swa is None or epoch < swa.start:
@@ -221,14 +219,6 @@ def train(
                     output_args=output_args,
                     device=device,
                 )
-                train_loss, train_eval_metrics = evaluate(
-                    model=model_to_evaluate,
-                    loss_fn=loss_fn,
-                    data_loader=train_loader,
-                    output_args=output_args,
-                    device=device,
-                )
- 
             if rank == 0:
                 valid_err_log(
                     valid_loss,
@@ -252,9 +242,6 @@ def train(
                         wandb_log_dict["valid_rmse_f"] = eval_metrics["rmse_f"]
                     if "rmse_efgs" in eval_metrics:
                         wandb_log_dict["valid_rmse_efgs"] = eval_metrics["rmse_efgs"]
-                    if "rmse_efgs" in train_eval_metrics:
-                        wandb_log_dict["train_rmse_efgs"] = train_eval_metrics["rmse_efgs"]
-
 
                     wandb.log(wandb_log_dict)
 

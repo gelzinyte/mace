@@ -185,6 +185,7 @@ def run(args: argparse.Namespace) -> None:
     logging.info(z_table)
 
     if atomic_energies_dict is None or len(atomic_energies_dict) == 0:
+
         # EG make this nicer
         if args.model == "EFGsMACE":
             pass
@@ -390,12 +391,16 @@ def run(args: argparse.Namespace) -> None:
     if args.scaling == "no_scaling":
         args.std = 1.0
         logging.info("No scaling selected")
+    elif args.scaling == "efgs_cbrt_det_scaling":
+        assert args.model == "EFGsMACE", f"'efgs_cbrt_det_scaling' only applicable to the 'EFGsMACE', not {args.model}"
+        # EG name "args.std" isn't appropriate name anymore? should change to args.scale and args.shift?  
+        args.std = modules.scaling_classes[args.scaling](data_loader=train_loader)
+        info_string = ", ".join([f"{el}: {scale:.3e}" for el, scale in zip(z_table.zs, args.std)]) 
+        logging.info(f"Per-element EFGs scaling: {info_string}")
     elif (args.mean is None or args.std is None) and args.model not in [
         "AtomicDipolesMACE",
         "EFGsMACE",
     ]:
-        if args.model == "EFGsMACE":
-            assert args.scaling.starts_with("efg_")
         args.mean, args.std = modules.scaling_classes[args.scaling](
             train_loader, atomic_energies
         )
@@ -531,9 +536,11 @@ def run(args: argparse.Namespace) -> None:
             MLP_irreps=o3.Irreps(args.MLP_irreps),
         )
     elif args.model == "EFGsMACE":
-        # EG add scale (from arguments?
         assert args.loss == "efgs", "Use efg loss with EFGsMACE"
         assert args.error_table == "EFGsRMSE", "Use error_table EFGsRMSE with EFGsMACE"
+        # EG double-check, might be only "2e", no others. 
+        assert "2e" in args.MLP_irreps, "Non-linear readout expects a '2e' in MLP_irreps"
+        assert args.scaling == "efgs_cbrt_det_scaling"
         model = modules.EFGsMACE(
             **model_config,
             correlation=args.correlation,
@@ -542,8 +549,8 @@ def run(args: argparse.Namespace) -> None:
                 "RealAgnosticInteractionBlock"
             ],
             MLP_irreps=o3.Irreps(args.MLP_irreps),
-            output_scales = args.std,
-            output_shifts = args.mean, 
+            output_scales = args.std, 
+            output_shifts = None 
         )
     else:
         raise RuntimeError(f"Unknown model: '{args.model}'")
@@ -722,6 +729,9 @@ def run(args: argparse.Namespace) -> None:
 
         wandb_config = {}
         args_dict = vars(args)
+        # format per-element std
+        if "std" in args_dict and isinstance(args_dict["std"], np.ndarray):
+            args_dict["std"] = str({el: std for el, std in zip(z_table.zs, args_dict["std"])})
         args_dict_json = json.dumps(args_dict)
         for key in args.wandb_log_hypers:
             wandb_config[key] = args_dict[key]

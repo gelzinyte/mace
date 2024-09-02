@@ -374,7 +374,6 @@ def trained_committee_fixture(tmp_path_factory, fitting_configs):
 
 @pytest.fixture(scope="module", name="trained_efgs_model")
 def trained_efgs_fixture(tmp_path_factory, fitting_configs):
-    # EG is water an appropriate test system, even if for tests? 
     _mace_params = {
         "name": "MACE",
         "valid_fraction": 0.05,
@@ -400,6 +399,8 @@ def trained_efgs_fixture(tmp_path_factory, fitting_configs):
         "dipole_key": "",
         "efgs_key": "REF_efgs",
         "error_table": "EFGsRMSE",
+        "scaling": "efgs_cbrt_det_scaling",
+        "MLP_irreps": "16x2e",
     }
 
     tmp_path = tmp_path_factory.mktemp("run_")
@@ -429,7 +430,7 @@ def trained_efgs_fixture(tmp_path_factory, fitting_configs):
             ]
         )
     )
-
+    print(cmd)
     p = subprocess.run(cmd.split(), env=run_env, check=True)
 
     assert p.returncode == 0
