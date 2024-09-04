@@ -1270,13 +1270,14 @@ class EFGsMACE(torch.nn.Module):
         contributions_efgs = torch.stack(efgs, dim=-1)  # [n_nodes,5, num_layers]
         final_efgs_spherical = torch.sum(contributions_efgs, dim=-1)  # [n_nodes, 5]
 
-        final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="2e")
+        non_scaled_final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="2e")
 
         #scale shift
-        final_efgs = self.scale_shift_fn(final_efgs, data["node_attrs"])
+        scaled_final_efgs = self.scale_shift_fn(non_scaled_final_efgs, data["node_attrs"])
 
 
         output = {
-            "efgs": final_efgs,
+            "efgs": scaled_final_efgs,
+            "non_scaled_efgs" : non_scaled_final_efgs,
         }
         return output

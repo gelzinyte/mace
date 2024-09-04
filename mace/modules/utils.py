@@ -413,23 +413,34 @@ def compute_fixed_charge_dipole(
         src=mu, index=batch.unsqueeze(-1), dim=0, dim_size=num_graphs
     )  # [N_graphs,3]
 
-def compute_mean_cbrt_abs_det_of_efgs(
+def compute_cbrt_abs_det_of_efgs(
         data_loader: torch.utils.data.DataLoader, 
 ) -> Tuple[torch.Tensor, torch.Tensor]:
 
+    cbrt_abs_det_list = []
     dets_list = []
+    elements_list = []
     for batch in data_loader:
 
         dets = torch.linalg.det(batch.efgs)
-        dets = torch.pow(torch.absolute(dets), 1/3)
+        dets_list.append(dets)
+
+        dets_cbrt_abs = torch.pow(torch.absolute(dets), 1/3)
 
         elements = batch.node_attrs
+        elements_list.append(elements)
 
-        dets_by_element = dets.view((-1, 1)) * elements # [..., n_elemnets]
-        dets_list.append(dets_by_element)
+        dets_cbrt_abs_by_element = dets_cbrt_abs.view((-1, 1)) * elements # [..., n_elemnets]
+        cbrt_abs_det_list.append(dets_cbrt_abs_by_element)
 
+
+
+    cbrt_abs_dets = torch.cat(cbrt_abs_det_list, dim=0)
     dets = torch.cat(dets_list, dim=0)
-    mean = to_numpy(dets.mean(axis=0))
+    elements = torch.cat(elements_list, axis=0)
+    import pdb; pdb.set_trace()
+
+    mean = to_numpy(cbrt_abs_dets.mean(axis=0))
     # std = to_numpy(dets.std(axis=0))
 
     return mean 

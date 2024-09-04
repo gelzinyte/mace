@@ -85,7 +85,7 @@ class MACECalculator(Calculator):
                 "dipole",
             ]
         elif model_type == "EFGsMACE":
-            self.implemented_properties = ["efgs"]
+            self.implemented_properties = ["efgs", "non_scaled_efgs"]
         else:
             raise ValueError(
                 f"Give a valid model_type: [MACE, DipoleMACE, EnergyDipoleMACE, EFGsMACE], {model_type} not supported"
@@ -196,6 +196,8 @@ class MACECalculator(Calculator):
         if model_type == "EFGsMACE":
             efgs = torch.zeros(num_models, num_atoms, 3, 3, device=self.device)
             dict_of_tensors.update({"efgs": efgs})
+            non_scaled_efgs = torch.zeros(num_models, num_atoms, 3, 3, device=self.device)
+            dict_of_tensors.update({"non_scaled_efgs": non_scaled_efgs})
         return dict_of_tensors
 
     def _atoms_to_batch(self, atoms):
@@ -261,6 +263,7 @@ class MACECalculator(Calculator):
                 ret_tensors["dipole"][i] = out["dipole"].detach()
             if self.model_type == "EFGsMACE":
                 ret_tensors["efgs"][i] = out["efgs"].detach()
+                ret_tensors["non_scaled_efgs"][i] = out["non_scaled_efgs"].detach()
 
         self.results = {}
         if self.model_type in ["MACE", "EnergyDipoleMACE"]:
@@ -318,6 +321,7 @@ class MACECalculator(Calculator):
                 )
         if self.model_type == "EFGsMACE":
             self.results["efgs"] = torch.mean(ret_tensors["efgs"], dim=0).cpu().numpy()
+            self.results["non_scaled_efgs"] = torch.mean(ret_tensors["non_scaled_efgs"], dim=0).cpu().numpy()
 
     def get_hessian(self, atoms=None):
         if atoms is None and self.atoms is None:

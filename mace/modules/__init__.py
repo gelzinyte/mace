@@ -50,7 +50,7 @@ from .utils import (
     compute_mean_std_atomic_inter_energy,
     compute_rms_dipoles,
     compute_statistics,
-    compute_mean_cbrt_abs_det_of_efgs,
+    compute_cbrt_abs_det_of_efgs,
 )
 
 interaction_classes: Dict[str, Type[InteractionBlock]] = {
@@ -66,7 +66,7 @@ scaling_classes: Dict[str, Callable] = {
     "std_scaling": compute_mean_std_atomic_inter_energy,
     "rms_forces_scaling": compute_mean_rms_energy_forces,
     "rms_dipoles_scaling": compute_rms_dipoles,
-    "efgs_cbrt_det_scaling": compute_mean_cbrt_abs_det_of_efgs,
+    "efgs_cbrt_det_scaling": compute_cbrt_abs_det_of_efgs,
 }
 
 gate_dict: Dict[str, Optional[Callable]] = {
