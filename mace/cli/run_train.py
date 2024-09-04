@@ -540,7 +540,10 @@ def run(args: argparse.Namespace) -> None:
         assert args.error_table == "EFGsRMSE", "Use error_table EFGsRMSE with EFGsMACE"
         # EG double-check, might be only "2e", no others. 
         assert "2e" in args.MLP_irreps, "Non-linear readout expects a '2e' in MLP_irreps"
-        assert args.scaling == "efgs_cbrt_det_scaling"
+        assert args.scaling in ["no_scaling", "efgs_cbrt_det_scaling"]
+        #EG messy
+        if args.scaling == "no_scaling":
+            args.std = None
         model = modules.EFGsMACE(
             **model_config,
             correlation=args.correlation,
