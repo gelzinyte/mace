@@ -32,6 +32,7 @@ from .utils import (
     compute_rmse,
 )
 
+from util import efg as uefg
 
 @dataclasses.dataclass
 class SWAContainer:
@@ -219,6 +220,13 @@ def train(
                     output_args=output_args,
                     device=device,
                 )
+                train_loss, train_eval_metrics = evaluate(
+                    model=model_to_evaluate,
+                    loss_fn=loss_fn,
+                    data_loader=train_loader,
+                    output_args=output_args,
+                    device=device,
+                )
             if rank == 0:
                 valid_err_log(
                     valid_loss,
@@ -242,6 +250,21 @@ def train(
                         wandb_log_dict["valid_rmse_f"] = eval_metrics["rmse_f"]
                     if "rmse_efgs" in eval_metrics:
                         wandb_log_dict["valid_rmse_efgs"] = eval_metrics["rmse_efgs"]
+                    if "rmse_efgs_element_0" in eval_metrics:
+                        wandb_log_dict["valid_rmse_efgs_element_0"] = eval_metrics["rmse_efgs_element_0"]
+                        wandb_log_dict["valid_rmse_efgs_element_1"] = eval_metrics["rmse_efgs_element_1"]
+                    if "rmse_efgs_element_2" in eval_metrics:
+                        wandb_log_dict["valid_rmse_efgs_element_0"] = eval_metrics["rmse_efgs_element_0"]
+
+                    if "rmse_efgs" in train_eval_metrics:
+                        wandb_log_dict["train_rmse_efgs"] = train_eval_metrics["rmse_efgs"]
+                    if "rmse_efgs_element_0" in train_eval_metrics:
+                        wandb_log_dict["train_rmse_efgs_element_0"] = train_eval_metrics["rmse_efgs_element_0"]
+                        wandb_log_dict["train_rmse_efgs_element_1"] = train_eval_metrics["rmse_efgs_element_1"]
+                    if "rmse_efgs_element_2" in train_eval_metrics:
+                        wandb_log_dict["train_rmse_efgs_element_0"] = train_eval_metrics["rmse_efgs_element_0"]
+                    
+
 
                     wandb.log(wandb_log_dict)
 
@@ -424,6 +447,15 @@ class MACELoss(Metric):
         self.add_state("efgs_computed", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("efgs", default=[], dist_reduce_fx="cat")
         self.add_state("delta_efgs", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_efgs_element_0", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_efgs_element_1", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_efgs_element_2", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_Cqs", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_etas", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_thetas", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_phis", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_omega_qs", default=[], dist_reduce_fx="cat")
+
 
     def update(self, batch, output):  # pylint: disable=arguments-differ
         loss = self.loss_fn(pred=output, ref=batch)
@@ -465,7 +497,24 @@ class MACELoss(Metric):
         if output.get("efgs") is not None and batch.efgs is not None:
             self.efgs_computed += 1.0
             self.efgs.append(batch.efgs)
-            self.delta_efgs.append(batch.efgs - output["efgs"])
+            delta_efgs = batch.efgs - output["efgs"]
+            self.delta_efgs.append(delta_efgs)
+
+            # mask three elements
+            select = 0
+            element_mask_0 = batch.node_attrs[:, select].view((-1, 1, 1))
+            self.delta_efgs_element_0.append(element_mask_0 * delta_efgs)
+
+            select = 1
+            element_mask_1 = batch.node_attrs[:, select].view((-1, 1, 1))
+            self.delta_efgs_element_1.append(element_mask_1 * delta_efgs)
+
+
+            if batch.node_attrs.shape[1] > 2:
+                select = 2
+                element_mask_2 = batch.node_attrs[:, select].view((-1, 1, 1))
+                self.delta_efgs_element_2.append(element_mask_2 * delta_efgs)
+
 
     def convert(self, delta: Union[torch.Tensor, List[torch.Tensor]]) -> np.ndarray:
         if isinstance(delta, list):
@@ -521,5 +570,15 @@ class MACELoss(Metric):
             # efgs = self.convert(self.efgs)
             delta_efgs = self.convert(self.delta_efgs)
             aux["rmse_efgs"] = compute_rmse(delta_efgs)
+
+            delta_efgs_element_0 = self.convert(self.delta_efgs_element_0)
+            aux["rmse_efgs_element_0"] = compute_rmse(delta_efgs_element_0)
+            delta_efgs_element_1 = self.convert(self.delta_efgs_element_1)
+            aux["rmse_efgs_element_1"] = compute_rmse(delta_efgs_element_1)
+            if len(self.delta_efgs_element_2) > 0:
+                delta_efgs_element_2 = self.convert(self.delta_efgs_element_2)
+                aux["rmse_efgs_element_2"] = compute_rmse(delta_efgs_element_2)
+
+
 
         return aux["loss"], aux
