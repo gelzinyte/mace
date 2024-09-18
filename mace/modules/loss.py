@@ -151,7 +151,11 @@ def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # efgs: [n_graphs*num_atoms, 3, 3]
     # Li - 0, O - 1, Ti - 2
     select = 0
-    element_mask = ref.node_attrs[:, select].view((-1, 1, 1))
+    element_mask = ref.node_attrs[:, select]
+    # only fit to the first efg
+    element_mask = torch.zeros(element_mask.shape).to(element_mask.get_device())
+    element_mask[0] = 1.
+    element_mask = element_mask.view((-1, 1, 1))
     error = ref["efgs"] - pred["efgs"]
     error_masked = element_mask * error
     return torch.mean(torch.square(error_masked))
