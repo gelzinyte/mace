@@ -153,10 +153,15 @@ def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     select = 0
     element_mask = ref.node_attrs[:, select]
     # only fit to the first efg
-    element_mask = torch.zeros(element_mask.shape).to(element_mask.get_device())
+    device = element_mask.get_device()
+    element_mask = torch.zeros(element_mask.shape)
+
+    if device > 0:
+        element_mask = element_mask.to(element_mask.get_device())
     element_mask[0] = 1.
     element_mask = element_mask.view((-1, 1, 1))
     error = ref["efgs"] - pred["efgs"]
+    error *= 1e6
     error_masked = element_mask * error
     return torch.mean(torch.square(error_masked))
 
@@ -390,4 +395,5 @@ class WeightedEFGsLoss(torch.nn.Module):
         )
 
     def forward(self, ref: Batch, pred: TensorDict) -> torch.Tensor:
-        return self.efgs_weight * mean_squared_error_efgs(ref, pred)
+        efg_loss = self.efgs_weight * mean_squared_error_efgs(ref, pred)
+        return efg_loss 

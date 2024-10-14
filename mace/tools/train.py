@@ -30,6 +30,7 @@ from .utils import (
     compute_rel_mae,
     compute_rel_rmse,
     compute_rmse,
+    compute_rel_per_element_mae
 )
 
 from util import efg as uefg
@@ -103,11 +104,10 @@ def valid_err_log(valid_loss, eval_metrics, logger, log_errors, epoch=None):
             f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_E_per_atom={error_e:.1f} meV, RMSE_F={error_f:.1f} meV / A, RMSE_Mu_per_atom={error_mu:.2f} mDebye"
         )
     elif log_errors == "EFGsRMSE":
-        error_efgs = eval_metrics[
-            "rmse_efgs"
-        ]  # EG times something? where are eval_metrics coming from?
+        error_efgs = eval_metrics["rmse_efgs"]        
+        rel_error_efgs = eval_metrics["mean_relative_error_efgs"]
         logging.info(
-            f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs:.1f} [UNITS]"
+                f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs*1e3:.3f} [atomic_units*1e3]  mean relative efg error: {rel_error_efgs*100:.2f} %"
         )
 
 
@@ -255,6 +255,9 @@ def train(
                         wandb_log_dict["valid_rmse_efgs_element_1"] = eval_metrics["rmse_efgs_element_1"]
                     if "rmse_efgs_element_2" in eval_metrics:
                         wandb_log_dict["valid_rmse_efgs_element_0"] = eval_metrics["rmse_efgs_element_0"]
+                    if "mean_relative_error_efgs" in eval_metrics:
+                        wandb_log_dict["valid_mean_relative_error_efgs"] = eval_metrics["mean_relative_error_efgs"]
+
 
                     if "rmse_efgs" in train_eval_metrics:
                         wandb_log_dict["train_rmse_efgs"] = train_eval_metrics["rmse_efgs"]
@@ -263,7 +266,8 @@ def train(
                         wandb_log_dict["train_rmse_efgs_element_1"] = train_eval_metrics["rmse_efgs_element_1"]
                     if "rmse_efgs_element_2" in train_eval_metrics:
                         wandb_log_dict["train_rmse_efgs_element_0"] = train_eval_metrics["rmse_efgs_element_0"]
-                    
+                    if "mean_relative_error_efgs" in train_eval_metrics:
+                        wandb_log_dict["train_mean_relative_error_efgs"] = train_eval_metrics["mean_relative_error_efgs"]
 
 
                     wandb.log(wandb_log_dict)
@@ -567,17 +571,20 @@ class MACELoss(Metric):
             aux["q95_mu"] = compute_q95(delta_mus)
         # Where is efgs_computed coming from
         if self.efgs_computed:
-            # efgs = self.convert(self.efgs)
+            # DFT efgs
+            efgs = self.convert(self.efgs)
             delta_efgs = self.convert(self.delta_efgs)
-            aux["rmse_efgs"] = compute_rmse(delta_efgs)
+            aux["rmse_efgs"] = compute_rmse(delta_efgs[0])
 
             delta_efgs_element_0 = self.convert(self.delta_efgs_element_0)
-            aux["rmse_efgs_element_0"] = compute_rmse(delta_efgs_element_0)
+            # EG change back to all not just first
+            aux["rmse_efgs_element_0"] = compute_rmse(delta_efgs_element_0[0])
             delta_efgs_element_1 = self.convert(self.delta_efgs_element_1)
             aux["rmse_efgs_element_1"] = compute_rmse(delta_efgs_element_1)
             if len(self.delta_efgs_element_2) > 0:
                 delta_efgs_element_2 = self.convert(self.delta_efgs_element_2)
                 aux["rmse_efgs_element_2"] = compute_rmse(delta_efgs_element_2)
+            aux["mean_relative_error_efgs"] = compute_rel_per_element_mae(delta=delta_efgs[0], target_val=efgs[0])
 
 
 

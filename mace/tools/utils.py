@@ -20,6 +20,10 @@ def compute_mae(delta: np.ndarray) -> float:
     return np.mean(np.abs(delta)).item()
 
 
+def compute_rel_per_element_mae(delta: np.ndarray, target_val: np.ndarray) -> float:
+    return np.mean(np.abs(delta / target_val))
+
+
 def compute_rel_mae(delta: np.ndarray, target_val: np.ndarray) -> float:
     target_norm = np.mean(np.abs(target_val))
     return np.mean(np.abs(delta)).item() / (target_norm + 1e-9) * 100

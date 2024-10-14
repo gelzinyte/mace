@@ -1270,8 +1270,8 @@ class EFGsMACE(torch.nn.Module):
         contributions_efgs = torch.stack(efgs, dim=-1)  # [n_nodes,5, num_layers]
         final_efgs_spherical = torch.sum(contributions_efgs, dim=-1)  # [n_nodes, 5]
 
-        #final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="2e")
-        final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="ij=ji")
+        final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="2e")
+        #final_efgs = spherical_to_cartesian(final_efgs_spherical, tensor_symmetry="ij=ji")
 
 
 
