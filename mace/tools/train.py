@@ -33,8 +33,6 @@ from .utils import (
     compute_rel_per_element_mae
 )
 
-from util import efg as uefg
-
 @dataclasses.dataclass
 class SWAContainer:
     model: AveragedModel
@@ -573,9 +571,13 @@ class MACELoss(Metric):
             # ---------------
             # select only the first entry
             # ----------------
-            element_mask = np.zeros(element_mask.shape)
-            element_mask[1] = 1.
-
+#             element_mask = np.zeros(element_mask.shape)
+#             element_mask[0] = 1.
+#             element_mask[1] = 1.
+#             element_mask[2] = 1.
+#             element_mask[3] = 1.
+#             element_mask[4] = 1.
+#             element_mask[5] = 1.
 
             # -----------
             # the rest
