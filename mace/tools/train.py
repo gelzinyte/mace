@@ -564,8 +564,22 @@ class MACELoss(Metric):
             delta_efgs = self.convert(self.delta_efgs)
             node_attributes = self.convert(self.node_attributes)
 
+            # -------------
+            # select all of element "select"
+            # -------------
             select = 0
             element_mask = node_attributes[:, select]
+
+            # ---------------
+            # select only the first entry
+            # ----------------
+            element_mask = np.zeros(element_mask.shape)
+            element_mask[1] = 1.
+
+
+            # -----------
+            # the rest
+            # -----------
 
             sel_delta_efgs = delta_efgs[element_mask==1]
             sel_target_efgs = efgs[element_mask==1]

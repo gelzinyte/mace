@@ -154,8 +154,22 @@ def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     error = ref["efgs"] - pred["efgs"]
     error *= 1e6
 
+    # ----------
+    # select only all instnces of an element
+    # ---------
     select = 0
     element_mask = ref.node_attrs[:, select]
+
+    # ---------------
+    # select only the first efg
+    # ---------------
+    element_mask = torch.zeros(element_mask.shape)
+    element_mask[1] = torch.tensor(1.0)
+
+    # ---------------
+    # the rest of the fiddling
+    # --------------
+
     element_mask = element_mask.view((-1, 1, 1))
     expanded_mask = element_mask.expand_as(error)
 
