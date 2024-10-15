@@ -1,4 +1,4 @@
-###########################################################################################
+##########################################################################################
 # Training script
 # Authors: Ilyes Batatia, Gregor Simm, David Kovacs
 # This program is distributed under the MIT License (see MIT.md)
@@ -236,39 +236,23 @@ def train(
                     epoch,
                 )
                 if log_wandb:
+                    exclude = ["loss", "time", "mode", "epoch"]
                     wandb_log_dict = {
                         "epoch": epoch,
                         "valid_loss": valid_loss,
                         # "valid_rmse_e_per_atom": eval_metrics["rmse_e_per_atom"],
                         # "valid_rmse_f": eval_metrics["rmse_f"],
                     }
-                    if "rmse_e_per_atom" in eval_metrics:
-                        wandb_log_dict["valid_rmse_e_per_atom"] = eval_metrics[
-                            "rmse_e_per_atom"
-                        ]
-                    if "rmse_f" in eval_metrics:
-                        wandb_log_dict["valid_rmse_f"] = eval_metrics["rmse_f"]
-                    if "rmse_efgs" in eval_metrics:
-                        wandb_log_dict["valid_rmse_efgs"] = eval_metrics["rmse_efgs"]
-                    if "rmse_efgs_element_0" in eval_metrics:
-                        wandb_log_dict["valid_rmse_efgs_element_0"] = eval_metrics["rmse_efgs_element_0"]
-                        wandb_log_dict["valid_rmse_efgs_element_1"] = eval_metrics["rmse_efgs_element_1"]
-                    if "rmse_efgs_element_2" in eval_metrics:
-                        wandb_log_dict["valid_rmse_efgs_element_0"] = eval_metrics["rmse_efgs_element_0"]
-                    if "mean_relative_error_efgs" in eval_metrics:
-                        wandb_log_dict["valid_mean_relative_error_efgs"] = eval_metrics["mean_relative_error_efgs"]
 
+                    for key, val in eval_metrics.items():
+                        if key in exclude:
+                            continue
+                        wandb_log_dict[f"valid_{key}"] = val
 
-                    if "rmse_efgs" in train_eval_metrics:
-                        wandb_log_dict["train_rmse_efgs"] = train_eval_metrics["rmse_efgs"]
-                    if "rmse_efgs_element_0" in train_eval_metrics:
-                        wandb_log_dict["train_rmse_efgs_element_0"] = train_eval_metrics["rmse_efgs_element_0"]
-                        wandb_log_dict["train_rmse_efgs_element_1"] = train_eval_metrics["rmse_efgs_element_1"]
-                    if "rmse_efgs_element_2" in train_eval_metrics:
-                        wandb_log_dict["train_rmse_efgs_element_0"] = train_eval_metrics["rmse_efgs_element_0"]
-                    if "mean_relative_error_efgs" in train_eval_metrics:
-                        wandb_log_dict["train_mean_relative_error_efgs"] = train_eval_metrics["mean_relative_error_efgs"]
-
+                    for key, val in train_eval_metrics.items():
+                        if key in exclude:
+                            continue
+                        wandb_log_dict[f"train_{key}"] = val
 
                     wandb.log(wandb_log_dict)
 
@@ -452,6 +436,8 @@ class MACELoss(Metric):
         self.add_state("efgs", default=[], dist_reduce_fx="cat")
         self.add_state("delta_efgs", default=[], dist_reduce_fx="cat")
         self.add_state("delta_efgs_element_0", default=[], dist_reduce_fx="cat")
+        self.add_state("relative_efgs_element_0", default=[], dist_reduce_fx="cat")
+        self.add_state("node_attributes", default=[], dist_reduce_fx="cat")
         self.add_state("delta_efgs_element_1", default=[], dist_reduce_fx="cat")
         self.add_state("delta_efgs_element_2", default=[], dist_reduce_fx="cat")
         self.add_state("delta_Cqs", default=[], dist_reduce_fx="cat")
@@ -508,6 +494,8 @@ class MACELoss(Metric):
             select = 0
             element_mask_0 = batch.node_attrs[:, select].view((-1, 1, 1))
             self.delta_efgs_element_0.append(element_mask_0 * delta_efgs)
+
+            self.node_attributes.append(batch.node_attrs)
 
             select = 1
             element_mask_1 = batch.node_attrs[:, select].view((-1, 1, 1))
@@ -574,17 +562,16 @@ class MACELoss(Metric):
             # DFT efgs
             efgs = self.convert(self.efgs)
             delta_efgs = self.convert(self.delta_efgs)
-            aux["rmse_efgs"] = compute_rmse(delta_efgs[0])
+            node_attributes = self.convert(self.node_attributes)
 
-            delta_efgs_element_0 = self.convert(self.delta_efgs_element_0)
-            # EG change back to all not just first
-            aux["rmse_efgs_element_0"] = compute_rmse(delta_efgs_element_0[0])
-            delta_efgs_element_1 = self.convert(self.delta_efgs_element_1)
-            aux["rmse_efgs_element_1"] = compute_rmse(delta_efgs_element_1)
-            if len(self.delta_efgs_element_2) > 0:
-                delta_efgs_element_2 = self.convert(self.delta_efgs_element_2)
-                aux["rmse_efgs_element_2"] = compute_rmse(delta_efgs_element_2)
-            aux["mean_relative_error_efgs"] = compute_rel_per_element_mae(delta=delta_efgs[0], target_val=efgs[0])
+            select = 0
+            element_mask = node_attributes[:, select]
+
+            sel_delta_efgs = delta_efgs[element_mask==1]
+            sel_target_efgs = efgs[element_mask==1]
+
+            aux["rmse_efgs"] = compute_rmse(sel_delta_efgs)
+            aux["mean_relative_error_efgs"] = compute_rel_per_element_mae(delta=sel_delta_efgs, target_val=sel_target_efgs)
 
 
 

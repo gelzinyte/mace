@@ -150,6 +150,24 @@ def conditional_huber_forces(
 def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # efgs: [n_graphs*num_atoms, 3, 3]
     # Li - 0, O - 1, Ti - 2
+
+    error = ref["efgs"] - pred["efgs"]
+    error *= 1e6
+
+    select = 0
+    element_mask = ref.node_attrs[:, select]
+    element_mask = element_mask.view((-1, 1, 1))
+    expanded_mask = element_mask.expand_as(error)
+
+    error_masked = error[expanded_mask.bool()]
+
+    return torch.mean(torch.square(error_masked))
+
+
+
+def mean_squared_error_efgs_first_element_only(ref: Batch, pred: TensorDict) -> torch.Tensor:
+    # efgs: [n_graphs*num_atoms, 3, 3]
+    # Li - 0, O - 1, Ti - 2
     select = 0
     element_mask = ref.node_attrs[:, select]
     # only fit to the first efg
