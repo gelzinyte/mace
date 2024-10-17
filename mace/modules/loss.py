@@ -149,7 +149,33 @@ def conditional_huber_forces(
 
 def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # efgs: [n_graphs*num_atoms, 3, 3]
-    return torch.mean(torch.square((ref["efgs"] - pred["efgs"])))
+    # Li - 0, O - 1, Ti - 2
+
+    error = ref["efgs"] - pred["efgs"]
+    error *= 1e6
+
+    # ----------
+    # select only all instnces of an element
+    # ---------
+    select = 0
+    element_mask = ref.node_attrs[:, select]
+
+    # ---------------
+    # select only the first efg
+    # ---------------
+    #element_mask = torch.zeros(element_mask.shape)
+    #element_mask[0] = torch.tensor(1.0)
+
+    # ---------------
+    # the rest of the fiddling
+    # --------------
+
+    element_mask = element_mask.view((-1, 1, 1))
+    expanded_mask = element_mask.expand_as(error)
+
+    error_masked = error[expanded_mask.bool()]
+
+    return torch.mean(torch.square(error_masked))
 
 
 class WeightedEnergyForcesLoss(torch.nn.Module):
@@ -381,4 +407,5 @@ class WeightedEFGsLoss(torch.nn.Module):
         )
 
     def forward(self, ref: Batch, pred: TensorDict) -> torch.Tensor:
-        return self.efgs_weight * mean_squared_error_efgs(ref, pred)
+        efg_loss = self.efgs_weight * mean_squared_error_efgs(ref, pred)
+        return efg_loss 

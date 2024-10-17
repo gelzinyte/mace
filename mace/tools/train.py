@@ -1,4 +1,4 @@
-###########################################################################################
+##########################################################################################
 # Training script
 # Authors: Ilyes Batatia, Gregor Simm, David Kovacs
 # This program is distributed under the MIT License (see MIT.md)
@@ -30,8 +30,8 @@ from .utils import (
     compute_rel_mae,
     compute_rel_rmse,
     compute_rmse,
+    compute_rel_per_element_mae
 )
-
 
 @dataclasses.dataclass
 class SWAContainer:
@@ -102,11 +102,10 @@ def valid_err_log(valid_loss, eval_metrics, logger, log_errors, epoch=None):
             f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_E_per_atom={error_e:.1f} meV, RMSE_F={error_f:.1f} meV / A, RMSE_Mu_per_atom={error_mu:.2f} mDebye"
         )
     elif log_errors == "EFGsRMSE":
-        error_efgs = eval_metrics[
-            "rmse_efgs"
-        ]  # EG times something? where are eval_metrics coming from?
+        error_efgs = eval_metrics["rmse_efgs"]        
+        rel_error_efgs = eval_metrics["mean_rel_error_efgs"]
         logging.info(
-            f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs:.1f} [UNITS]"
+                f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs*1e3:.3f} [atomic_units*1e3]  mean relative efg error: {rel_error_efgs*100:.2f} %"
         )
 
 
@@ -219,6 +218,13 @@ def train(
                     output_args=output_args,
                     device=device,
                 )
+                train_loss, train_eval_metrics = evaluate(
+                    model=model_to_evaluate,
+                    loss_fn=loss_fn,
+                    data_loader=train_loader,
+                    output_args=output_args,
+                    device=device,
+                )
             if rank == 0:
                 valid_err_log(
                     valid_loss,
@@ -228,20 +234,23 @@ def train(
                     epoch,
                 )
                 if log_wandb:
+                    exclude = ["loss", "time", "mode", "epoch"]
                     wandb_log_dict = {
                         "epoch": epoch,
                         "valid_loss": valid_loss,
                         # "valid_rmse_e_per_atom": eval_metrics["rmse_e_per_atom"],
                         # "valid_rmse_f": eval_metrics["rmse_f"],
                     }
-                    if "rmse_e_per_atom" in eval_metrics:
-                        wandb_log_dict["valid_rmse_e_per_atom"] = eval_metrics[
-                            "rmse_e_per_atom"
-                        ]
-                    if "rmse_f" in eval_metrics:
-                        wandb_log_dict["valid_rmse_f"] = eval_metrics["rmse_f"]
-                    if "rmse_efgs" in eval_metrics:
-                        wandb_log_dict["valid_rmse_efgs"] = eval_metrics["rmse_efgs"]
+
+                    for key, val in eval_metrics.items():
+                        if key in exclude:
+                            continue
+                        wandb_log_dict[f"valid_{key}"] = val
+
+                    for key, val in train_eval_metrics.items():
+                        if key in exclude:
+                            continue
+                        wandb_log_dict[f"train_{key}"] = val
 
                     wandb.log(wandb_log_dict)
 
@@ -420,10 +429,16 @@ class MACELoss(Metric):
         self.add_state("mus", default=[], dist_reduce_fx="cat")
         self.add_state("delta_mus", default=[], dist_reduce_fx="cat")
         self.add_state("delta_mus_per_atom", default=[], dist_reduce_fx="cat")
-        # EG check what's happening here
         self.add_state("efgs_computed", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("efgs", default=[], dist_reduce_fx="cat")
         self.add_state("delta_efgs", default=[], dist_reduce_fx="cat")
+        self.add_state("node_attributes", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_Cqs", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_etas", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_thetas", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_phis", default=[], dist_reduce_fx="cat")
+        self.add_state("delta_omega_qs", default=[], dist_reduce_fx="cat")
+
 
     def update(self, batch, output):  # pylint: disable=arguments-differ
         loss = self.loss_fn(pred=output, ref=batch)
@@ -465,7 +480,9 @@ class MACELoss(Metric):
         if output.get("efgs") is not None and batch.efgs is not None:
             self.efgs_computed += 1.0
             self.efgs.append(batch.efgs)
-            self.delta_efgs.append(batch.efgs - output["efgs"])
+            delta_efgs = batch.efgs - output["efgs"]
+            self.delta_efgs.append(delta_efgs)
+
 
     def convert(self, delta: Union[torch.Tensor, List[torch.Tensor]]) -> np.ndarray:
         if isinstance(delta, list):
@@ -518,8 +535,32 @@ class MACELoss(Metric):
             aux["q95_mu"] = compute_q95(delta_mus)
         # Where is efgs_computed coming from
         if self.efgs_computed:
-            # efgs = self.convert(self.efgs)
+            # DFT efgs
+            efgs = self.convert(self.efgs)
             delta_efgs = self.convert(self.delta_efgs)
-            aux["rmse_efgs"] = compute_rmse(delta_efgs)
+            node_attributes = self.convert(self.node_attributes)
+
+            # -------------
+            # select all of element "select"
+            # -------------
+            select = 0
+            element_mask = node_attributes[:, select]
+
+            # ---------------
+            # select only the first entry
+            # ----------------
+            #element_mask = np.zeros(element_mask.shape)
+            #element_mask[0] = 1.
+
+            # -----------
+            # the rest
+            # -----------
+
+            sel_delta_efgs = delta_efgs[element_mask==1]
+            sel_target_efgs = efgs[element_mask==1]
+
+            aux["rmse_efgs"] = compute_rmse(sel_delta_efgs)
+            aux["mean_rel_error_efgs"] = compute_rel_per_element_mae(delta=sel_delta_efgs, target_val=sel_target_efgs)
+
 
         return aux["loss"], aux

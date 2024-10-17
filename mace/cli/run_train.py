@@ -540,18 +540,43 @@ def run(args: argparse.Namespace) -> None:
         assert args.error_table == "EFGsRMSE", "Use error_table EFGsRMSE with EFGsMACE"
         # EG double-check, might be only "2e", no others. 
         assert "2e" in args.MLP_irreps, "Non-linear readout expects a '2e' in MLP_irreps"
-        assert args.scaling == "efgs_cbrt_det_scaling"
+        assert args.scaling in ["no_scaling", "efgs_cbrt_det_scaling"]
+        #EG messy
+        if args.scaling == "no_scaling":
+            args.std = None
+
+        model_config["correlation"] = args.correlation
+        model_config["output_scales"] = args.std
+        model_config["interaction_cls_first"] = modules.interaction_classes["RealAgnosticInteractionBlock"]
+
+
+        m_cfg_save = {"model_config" : convert_to_json_format(deepcopy(model_config))}
+        m_cfg_save["gate"] = args.gate
+        m_cfg_save["interaction_class_first"] = "RealAgnosticInteractionBlock"
+        m_cfg_save["model_config"]["MLP_irreps"] = args.MLP_irreps
+        m_cfg_save["model_config"]["radial_type"] = "bessel" 
+
+
+        #del m_cfg_save["model_config"]["interaction_cls"]
+
+        #m_cfg_save["interaction_cls"] = args.interaction
+
+        #modules.interaction_classes[args.interaction],
+
+
         model = modules.EFGsMACE(
             **model_config,
-            correlation=args.correlation,
-             gate=modules.gate_dict[args.gate],
-            interaction_cls_first=modules.interaction_classes[
-                "RealAgnosticInteractionBlock"
-            ],
+            gate=modules.gate_dict[args.gate],
             MLP_irreps=o3.Irreps(args.MLP_irreps),
-            output_scales = args.std, 
-            output_shifts = None 
         )
+
+
+        params = json.dumps(m_cfg_save)
+    
+        model_params_fn = Path(args.model_dir) / "model_params.json"
+        with open(model_params_fn, "w") as f:
+            f.write(params)
+
     else:
         raise RuntimeError(f"Unknown model: '{args.model}'")
 
