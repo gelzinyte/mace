@@ -262,16 +262,23 @@ def convert_from_json_format(dict_input):
     dict_output["hidden_irreps"] = o3.Irreps(dict_input["hidden_irreps"])
     dict_output["MLP_irreps"] = o3.Irreps(dict_input["MLP_irreps"])
     dict_output["avg_num_neighbors"] = float(dict_input["avg_num_neighbors"])
-    dict_output["gate"] = torch.nn.functional.silu
-    dict_output["atomic_energies"] = np.array(dict_input["atomic_energies"])
-    dict_output["atomic_numbers"] = dict_input["atomic_numbers"]
+    if "gate" in dict_input:
+        dict_output["gate"] = torch.nn.functional.silu
+    if "atomic_energies" in dict_input:
+        dict_output["atomic_energies"] = np.array(dict_input["atomic_energies"])
+    dict_output["atomic_numbers"] = eval(dict_input["atomic_numbers"])
     dict_output["correlation"] = int(dict_input["correlation"])
     dict_output["radial_type"] = dict_input["radial_type"]
-    dict_output["radial_MLP"] = ast.literal_eval(dict_input["radial_MLP"])
-    dict_output["pair_repulsion"] = ast.literal_eval(dict_input["pair_repulsion"])
-    dict_output["distance_transform"] = dict_input["distance_transform"]
-    dict_output["atomic_inter_scale"] = float(dict_input["atomic_inter_scale"])
-    dict_output["atomic_inter_shift"] = float(dict_input["atomic_inter_shift"])
+    if "radial_MLP" in dict_input:
+        dict_output["radial_MLP"] = ast.literal_eval(dict_input["radial_MLP"])
+    if "pair_repulsion" in dict_input:
+        dict_output["pair_repulsion"] = ast.literal_eval(dict_input["pair_repulsion"])
+    if "distance_transform" in dict_input:
+        dict_output["distance_transform"] = dict_input["distance_transform"]
+    if "atomic_inter_scale" in dict_input:
+        dict_output["atomic_inter_scale"] = float(dict_input["atomic_inter_scale"])
+    if "atomic_inter_shift" in dict_input:
+        dict_output["atomic_inter_shift"] = float(dict_input["atomic_inter_shift"])
 
     return dict_output
 

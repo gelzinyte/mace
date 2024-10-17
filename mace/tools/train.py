@@ -103,7 +103,7 @@ def valid_err_log(valid_loss, eval_metrics, logger, log_errors, epoch=None):
         )
     elif log_errors == "EFGsRMSE":
         error_efgs = eval_metrics["rmse_efgs"]        
-        rel_error_efgs = eval_metrics["mean_relative_error_efgs"]
+        rel_error_efgs = eval_metrics["mean_rel_error_efgs"]
         logging.info(
                 f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs*1e3:.3f} [atomic_units*1e3]  mean relative efg error: {rel_error_efgs*100:.2f} %"
         )
@@ -571,9 +571,9 @@ class MACELoss(Metric):
             # ---------------
             # select only the first entry
             # ----------------
-#             element_mask = np.zeros(element_mask.shape)
-#             element_mask[0] = 1.
-#             element_mask[1] = 1.
+            #element_mask = np.zeros(element_mask.shape)
+            #element_mask[0] = 1.
+            #element_mask[1] = 1.
 #             element_mask[2] = 1.
 #             element_mask[3] = 1.
 #             element_mask[4] = 1.
@@ -587,8 +587,7 @@ class MACELoss(Metric):
             sel_target_efgs = efgs[element_mask==1]
 
             aux["rmse_efgs"] = compute_rmse(sel_delta_efgs)
-            aux["mean_relative_error_efgs"] = compute_rel_per_element_mae(delta=sel_delta_efgs, target_val=sel_target_efgs)
-
+            aux["mean_rel_error_efgs"] = compute_rel_per_element_mae(delta=sel_delta_efgs, target_val=sel_target_efgs)
 
 
         return aux["loss"], aux

@@ -163,9 +163,9 @@ def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # ---------------
     # select only the first efg
     # ---------------
-#     element_mask = torch.zeros(element_mask.shape)
-#     element_mask[0] = torch.tensor(1.0)
-#     element_mask[1] = torch.tensor(1.0)
+    #element_mask = torch.zeros(element_mask.shape)
+    #element_mask[0] = torch.tensor(1.0)
+    #element_mask[1] = torch.tensor(1.0)
 #     element_mask[2] = torch.tensor(1.0)
 #     element_mask[3] = torch.tensor(1.0)
 #     element_mask[4] = torch.tensor(1.0)
