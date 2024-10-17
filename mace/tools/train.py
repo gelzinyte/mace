@@ -429,15 +429,10 @@ class MACELoss(Metric):
         self.add_state("mus", default=[], dist_reduce_fx="cat")
         self.add_state("delta_mus", default=[], dist_reduce_fx="cat")
         self.add_state("delta_mus_per_atom", default=[], dist_reduce_fx="cat")
-        # EG check what's happening here
         self.add_state("efgs_computed", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("efgs", default=[], dist_reduce_fx="cat")
         self.add_state("delta_efgs", default=[], dist_reduce_fx="cat")
-        self.add_state("delta_efgs_element_0", default=[], dist_reduce_fx="cat")
-        self.add_state("relative_efgs_element_0", default=[], dist_reduce_fx="cat")
         self.add_state("node_attributes", default=[], dist_reduce_fx="cat")
-        self.add_state("delta_efgs_element_1", default=[], dist_reduce_fx="cat")
-        self.add_state("delta_efgs_element_2", default=[], dist_reduce_fx="cat")
         self.add_state("delta_Cqs", default=[], dist_reduce_fx="cat")
         self.add_state("delta_etas", default=[], dist_reduce_fx="cat")
         self.add_state("delta_thetas", default=[], dist_reduce_fx="cat")
@@ -487,23 +482,6 @@ class MACELoss(Metric):
             self.efgs.append(batch.efgs)
             delta_efgs = batch.efgs - output["efgs"]
             self.delta_efgs.append(delta_efgs)
-
-            # mask three elements
-            select = 0
-            element_mask_0 = batch.node_attrs[:, select].view((-1, 1, 1))
-            self.delta_efgs_element_0.append(element_mask_0 * delta_efgs)
-
-            self.node_attributes.append(batch.node_attrs)
-
-            select = 1
-            element_mask_1 = batch.node_attrs[:, select].view((-1, 1, 1))
-            self.delta_efgs_element_1.append(element_mask_1 * delta_efgs)
-
-
-            if batch.node_attrs.shape[1] > 2:
-                select = 2
-                element_mask_2 = batch.node_attrs[:, select].view((-1, 1, 1))
-                self.delta_efgs_element_2.append(element_mask_2 * delta_efgs)
 
 
     def convert(self, delta: Union[torch.Tensor, List[torch.Tensor]]) -> np.ndarray:
@@ -573,11 +551,6 @@ class MACELoss(Metric):
             # ----------------
             #element_mask = np.zeros(element_mask.shape)
             #element_mask[0] = 1.
-            #element_mask[1] = 1.
-#             element_mask[2] = 1.
-#             element_mask[3] = 1.
-#             element_mask[4] = 1.
-#             element_mask[5] = 1.
 
             # -----------
             # the rest
