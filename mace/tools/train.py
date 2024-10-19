@@ -482,6 +482,7 @@ class MACELoss(Metric):
             self.efgs.append(batch.efgs)
             delta_efgs = batch.efgs - output["efgs"]
             self.delta_efgs.append(delta_efgs)
+            self.node_attributes.append(batch.node_attrs)
 
 
     def convert(self, delta: Union[torch.Tensor, List[torch.Tensor]]) -> np.ndarray:

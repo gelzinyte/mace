@@ -541,6 +541,9 @@ def create_error_table(
             if "rmse_efgs" in metrics:
                 wandb_log_dict[name + "_final_rmse_efgs"] = (metrics["rmse_efgs"],)
 
+            for key, val in metrics.items():
+                wandb_log_dict[name + "_final_" + key] = val
+
             print(wandb_log_dict)
             wandb.log(wandb_log_dict)
         if table_type == "TotalRMSE":
