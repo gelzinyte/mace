@@ -399,7 +399,7 @@ def trained_efgs_fixture(tmp_path_factory, fitting_configs):
         "dipole_key": "",
         "efgs_key": "REF_efgs",
         "error_table": "EFGsRMSE",
-        "scaling": "efgs_cbrt_det_scaling",
+        "scaling": "no_scaling",
         "MLP_irreps": "16x2e",
     }
 
