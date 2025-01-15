@@ -397,6 +397,13 @@ def run(args: argparse.Namespace) -> None:
         args.std = modules.scaling_classes[args.scaling](data_loader=train_loader)
         info_string = ", ".join([f"{el}: {scale:.3e}" for el, scale in zip(z_table.zs, args.std)]) 
         logging.info(f"Per-element EFGs scaling: {info_string}")
+    elif args.scaling == "efgs_mean_eval_scaling":
+        assert args.model == "EFGsMACE", f"'efgs_mean_eval_scaling' only applicable to the 'EFGsMACE', not {args.model}"
+        # EG name "args.std" isn't appropriate name anymore? should change to args.scale and args.shift?  
+        args.std = modules.scaling_classes[args.scaling](data_loader=train_loader)
+        info_string = ", ".join([f"{el}: {scale:.3e}" for el, scale in zip(z_table.zs, args.std)]) 
+        logging.info(f"Per-element EFGs scaling: {info_string}")
+
     elif (args.mean is None or args.std is None) and args.model not in [
         "AtomicDipolesMACE",
         "EFGsMACE",
@@ -540,7 +547,7 @@ def run(args: argparse.Namespace) -> None:
         assert args.error_table == "EFGsRMSE", "Use error_table EFGsRMSE with EFGsMACE"
         # EG double-check, might be only "2e", no others. 
         assert "2e" in args.MLP_irreps, "Non-linear readout expects a '2e' in MLP_irreps"
-        assert args.scaling in ["no_scaling", "efgs_cbrt_det_scaling"]
+        assert args.scaling in ["no_scaling", "efgs_cbrt_det_scaling", "efgs_mean_eval_scaling"]
         #EG messy
         if args.scaling == "no_scaling":
             args.std = None

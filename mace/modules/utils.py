@@ -434,5 +434,27 @@ def compute_mean_cbrt_abs_det_of_efgs(
 
     return mean 
 
+def compute_mean_eval_of_efgs(
+        data_loader: torch.utils.data.DataLoader, 
+) -> Tuple[torch.Tensor, torch.Tensor]:
+
+    evals_list = []
+    for batch in data_loader:
+
+        evals = torch.linalg.eigvals(batch.efgs)
+        evals = torch.abs(evals)
+
+        elements = batch.node_attrs
+
+        evals_by_element = evals.unsqueeze(-1) * elements.unsqueeze(-2) # [..., 3, n_elemnets]
+        evals_list.append(evals_by_element)
+
+    evals = torch.cat(evals_list, dim=0)
+    evals = evals.reshape((-1, 3))  # get all the evals into one big list
+    mean = to_numpy(evals.mean(axis=0))
+    # std = to_numpy(dets.std(axis=0))
+
+    return mean 
+
 
 
