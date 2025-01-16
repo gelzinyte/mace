@@ -349,7 +349,9 @@ def run(args: argparse.Namespace) -> None:
             dipole_weight=args.dipole_weight,
         )
     elif args.loss == "efgs":
+        per_element_mean_eval = modules.scaling_classes["efgs_mean_eval_scaling"](data_loader=train_loader)
         loss_fn = modules.WeightedEFGsLoss(
+            efgs_element_weights = 1/per_element_mean_eval, 
             efgs_weight=args.efgs_weight,
         )
     else:

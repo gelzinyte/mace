@@ -147,6 +147,22 @@ def conditional_huber_forces(
     return torch.mean(se)
 
 
+
+def weighted_mean_squared_error_efgs(ref: Batch, pred: TensorDict, efgs_element_weights: TensorDict) -> torch.Tensor:
+    # efgs: [n_graphs*num_atoms, 3, 3]
+    # Li - 0, O - 1, Ti - 2
+
+    error = ref["efgs"] - pred["efgs"]
+
+    # select the correct weight based on the element of the efg 
+    weights = ref.node_attrs * efgs_element_weights 
+    # collapse in one direction and match error shape 
+    weights = weights.sum(axis=1).view(-1, 1, 1)
+    error = error * weights
+
+    return torch.mean(torch.square(error))
+
+
 def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # efgs: [n_graphs*num_atoms, 3, 3]
     # Li - 0, O - 1, Ti - 2
@@ -401,13 +417,18 @@ class WeightedEnergyForcesDipoleLoss(torch.nn.Module):
 
 
 class WeightedEFGsLoss(torch.nn.Module):
-    def __init__(self, efgs_weight=1.0) -> None:
+    def __init__(self, efgs_element_weights, efgs_weight=1.0,) -> None:
         super().__init__()
         self.register_buffer(
             "efgs_weight",
             torch.tensor(efgs_weight, dtype=torch.get_default_dtype()),
         )
+        self.register_buffer(
+            "efgs_element_weights",
+            torch.tensor(efgs_element_weights, dtype=torch.get_default_dtype()),
+        )
+
 
     def forward(self, ref: Batch, pred: TensorDict) -> torch.Tensor:
-        efg_loss = self.efgs_weight * mean_squared_error_efgs(ref, pred)
+        efg_loss = self.efgs_weight * weighted_mean_squared_error_efgs(ref, pred, self.efgs_element_weights)
         return efg_loss 
