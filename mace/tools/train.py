@@ -102,11 +102,18 @@ def valid_err_log(valid_loss, eval_metrics, logger, log_errors, epoch=None):
             f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_E_per_atom={error_e:.1f} meV, RMSE_F={error_f:.1f} meV / A, RMSE_Mu_per_atom={error_mu:.2f} mDebye"
         )
     elif log_errors == "EFGsRMSE":
-        error_efgs = eval_metrics["rmse_efgs"]        
-        rel_error_efgs = eval_metrics["mean_rel_error_efgs"]
-        logging.info(
-                f"Epoch {epoch}: loss={valid_loss:.4f}, RMSE_EFG={error_efgs*1e3:.3f} [atomic_units*1e3]  mean relative efg error: {rel_error_efgs*100:.2f} %"
-        )
+
+        report_string = f"Epoch {epoch}: loss={valid_loss:.4f}, "
+
+        for key, vals in eval_metrics.items():
+
+            if "rmse_efgs" in key:
+                report_string += f"{key}={vals*1e3:.3f} [mAU], "
+
+            if "mean_rel_error_efgs" in key:
+                report_string += f"{key}={vals *100:.2f} %, "
+
+        logging.info(report_string)
 
 
 def train(
@@ -544,24 +551,29 @@ class MACELoss(Metric):
             # -------------
             # select all of element "select"
             # -------------
-            select = 0
-            element_mask = node_attributes[:, select]
+#             select = 0
+#             element_mask = node_attributes[:, select]
+# 
+#             sel_delta_efgs = delta_efgs[element_mask==1]
+#             sel_target_efgs = efgs[element_mask==1]
+# 
+#             aux["rmse_efgs"] = compute_rmse(sel_delta_efgs)
+#             aux["mean_rel_error_efgs"] = compute_rel_per_element_mae(delta=sel_delta_efgs, target_val=sel_target_efgs)
+# 
+            aux[f"rmse_efgs_all_el"] = compute_rmse(delta_efgs)
+            aux[f"mean_rel_error_efgs_all_el"] = compute_rel_per_element_mae(delta=delta_efgs, target_val=efgs)
 
-            # ---------------
-            # select only the first entry
-            # ----------------
-            #element_mask = np.zeros(element_mask.shape)
-            #element_mask[0] = 1.
+            for select in [0, 1, 2]:
+                element_mask = node_attributes[:, select]
 
-            # -----------
-            # the rest
-            # -----------
+                sel_delta_efgs = delta_efgs[element_mask==1]
+                sel_target_efgs = efgs[element_mask==1]
 
-            sel_delta_efgs = delta_efgs[element_mask==1]
-            sel_target_efgs = efgs[element_mask==1]
+                aux[f"rmse_efgs_el{select}"] = compute_rmse(sel_delta_efgs)
+                aux[f"mean_rel_error_efgs_el{select}"] = compute_rel_per_element_mae(delta=sel_delta_efgs, target_val=sel_target_efgs)
 
-            aux["rmse_efgs"] = compute_rmse(sel_delta_efgs)
-            aux["mean_rel_error_efgs"] = compute_rel_per_element_mae(delta=sel_delta_efgs, target_val=sel_target_efgs)
+
+
 
 
         return aux["loss"], aux

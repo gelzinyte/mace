@@ -157,8 +157,8 @@ def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # ----------
     # select only all instnces of an element
     # ---------
-    select = 0
-    element_mask = ref.node_attrs[:, select]
+    #select = 0
+    #element_mask = ref.node_attrs[:, select]
 
     # ---------------
     # select only the first efg
@@ -170,12 +170,14 @@ def mean_squared_error_efgs(ref: Batch, pred: TensorDict) -> torch.Tensor:
     # the rest of the fiddling
     # --------------
 
-    element_mask = element_mask.view((-1, 1, 1))
-    expanded_mask = element_mask.expand_as(error)
+    #element_mask = element_mask.view((-1, 1, 1))
+    #expanded_mask = element_mask.expand_as(error)
 
-    error_masked = error[expanded_mask.bool()]
+    #error_masked = error[expanded_mask.bool()]
 
-    return torch.mean(torch.square(error_masked))
+    #return torch.mean(torch.square(error_masked))
+    return torch.mean(torch.square(error))
+
 
 
 class WeightedEnergyForcesLoss(torch.nn.Module):
