@@ -394,8 +394,8 @@ def build_default_arg_parser() -> argparse.ArgumentParser:
         ],
     )
     parser.add_argument(
-        "--loss_element_weights",
-        help="Dictionary of per-chemical element weights for the EFG loss function. Defaults to eval unit var.",
+        "--loss_element_weights_multiplier",
+        help="Dictionary of per-chemical element weights multipliers for the EFG loss function.",
         default=None,
         type=str,
         required=False,

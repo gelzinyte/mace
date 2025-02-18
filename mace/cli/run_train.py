@@ -352,7 +352,7 @@ def run(args: argparse.Namespace) -> None:
         )
     elif args.loss == "efgs":
         efgs_element_weights = get_efgs_per_element_weights(
-            args.loss_element_weights, 
+            args.loss_element_weights_multiplier, 
             train_loader, 
             z_table,
         )
