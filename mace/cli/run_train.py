@@ -42,6 +42,8 @@ from mace.tools.scripts_utils import (
 from mace.tools.slurm_distributed import DistributedEnvironment
 from mace.tools.utils import AtomicNumberTable
 
+from mace.tools.efg_utils import get_efgs_per_element_weights
+
 
 def main() -> None:
     """
@@ -349,10 +351,13 @@ def run(args: argparse.Namespace) -> None:
             dipole_weight=args.dipole_weight,
         )
     elif args.loss == "efgs":
-        per_element_mean_eval = 1/modules.scaling_classes["efgs_mean_eval_scaling"](data_loader=train_loader)
-        logging.info(f'using weighted efg loss with weights: {per_element_mean_eval}')
+        efgs_element_weights = get_efgs_per_element_weights(
+            args.loss_element_weights, 
+            train_loader, 
+            z_table,
+        )
         loss_fn = modules.WeightedEFGsLoss(
-            efgs_element_weights = per_element_mean_eval, 
+            efgs_element_weights = efgs_element_weights, 
             efgs_weight=args.efgs_weight,
         )
     else:
