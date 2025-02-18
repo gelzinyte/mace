@@ -52,6 +52,7 @@ from .utils import (
     compute_statistics,
     compute_mean_cbrt_abs_det_of_efgs,
     compute_mean_eval_of_efgs,
+    compute_eval_unit_stdev_scaling
 )
 
 interaction_classes: Dict[str, Type[InteractionBlock]] = {
@@ -69,6 +70,7 @@ scaling_classes: Dict[str, Callable] = {
     "rms_dipoles_scaling": compute_rms_dipoles,
     "efgs_cbrt_det_scaling": compute_mean_cbrt_abs_det_of_efgs,
     "efgs_mean_eval_scaling": compute_mean_eval_of_efgs, 
+    "efgs_eval_unit_stdev_scaling": compute_eval_unit_stdev_scaling
 }
 
 gate_dict: Dict[str, Optional[Callable]] = {
