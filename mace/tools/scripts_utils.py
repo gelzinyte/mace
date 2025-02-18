@@ -639,7 +639,7 @@ def create_error_table(
             table.add_row(
                 [
                     name,
-                    f"{metrics['rmse_efgs']*1000:.1f}",
+                    f"{metrics['rmse_efgs_all_el']*1000:.1f}",
                 ]
             )
     return table
