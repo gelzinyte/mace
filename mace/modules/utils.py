@@ -438,6 +438,7 @@ def compute_mean_eval_of_efgs(
         data_loader: torch.utils.data.DataLoader, 
 ) -> Tuple[torch.Tensor, torch.Tensor]:
 
+
     evals_list = []
     for batch in data_loader:
 
@@ -450,7 +451,8 @@ def compute_mean_eval_of_efgs(
         evals_list.append(evals_by_element)
 
     evals = torch.cat(evals_list, dim=0)
-    evals = evals.reshape((-1, 3))  # get all the evals into one big list
+    num_elements = evals.shape[2]
+    evals = evals.reshape((-1, num_elements))  # get all the evals into one big list
     mean = to_numpy(evals.mean(axis=0))
     # std = to_numpy(dets.std(axis=0))
 
